@@ -6,7 +6,6 @@
     "build": "next build",
     "dev": "next dev",
     "check": "tsc --noEmit && next lint",
-    "start": "next start"
   },
   "dependencies": {
     "@openai/agents-realtime": "^0.1.10",

@@ -1,7 +1,15 @@
-This is a standalone frontend app with no backend api.
-This is meant to be a simple OpenAI realtime api client for kids to safely interact with AI.
-- API key is stored in localstorage
-- There is no backend, no server components.
-This will be deployed as a standalone html/js page.
+# Project
 
 The project is inspired by "young ladies illustrated primer" from neel stephenson diamond age.
+
+Feel free to read ./docs/prd.md when in doubt to gather more information when implementing features.
+
+# Technical implementation
+
+Its an ai voice app connecting to realtime api from openai. Its frontend only, bring your own key solution.
+
+## Rules
+
+- Run `npm run check` after you have completed implementing changes. 
+- There is no backend. Never introduce any backend routes nor there will ever be SSR.
+- 
