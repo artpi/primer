@@ -36,6 +36,23 @@ export function PrimerOrb() {
 
     let time = 0
 
+    // Helper function to calculate radius variation for cloud-like effect
+    const calculateRadiusVariation = (state: OrbState, t: number, index: number, offset: number): number => {
+      if (state === "listening") {
+        return Math.sin(t * 2 + index * 0.1 + offset) * 8 +
+               Math.sin(t * 3 + index * 0.05 + offset * 2) * 4
+      } else if (state === "thinking") {
+        return Math.sin(t * 3 + index * 0.2 + offset) * 5 +
+               Math.sin(t * 2 + index * 0.15 + offset * 1.5) * 3
+      } else if (state === "speaking") {
+        return Math.sin(t * 4 + index * 0.15 + offset) * 12 +
+               Math.sin(t * 5 + index * 0.08 + offset * 2) * 6
+      } else {
+        return Math.sin(t + index * 0.05 + offset) * 3 +
+               Math.sin(t * 1.5 + index * 0.03 + offset * 1.2) * 2
+      }
+    }
+
     const animate = () => {
       ctx.clearRect(0, 0, 300, 300)
 
@@ -54,44 +71,15 @@ export function PrimerOrb() {
           const angle = (i / points) * Math.PI * 2
           const nextAngle = ((i + 1) / points) * Math.PI * 2
 
-          // Different wave patterns based on state with multiple harmonics for cloud-like effect
-          let radiusVariation = 0
-          if (orbState === "listening") {
-            radiusVariation = 
-              Math.sin(time * 2 + i * 0.1 + layerOffset) * 8 +
-              Math.sin(time * 3 + i * 0.05 + layerOffset * 2) * 4
-          } else if (orbState === "thinking") {
-            radiusVariation = 
-              Math.sin(time * 3 + i * 0.2 + layerOffset) * 5 +
-              Math.sin(time * 2 + i * 0.15 + layerOffset * 1.5) * 3
-          } else if (orbState === "speaking") {
-            radiusVariation = 
-              Math.sin(time * 4 + i * 0.15 + layerOffset) * 12 +
-              Math.sin(time * 5 + i * 0.08 + layerOffset * 2) * 6
-          } else {
-            radiusVariation = 
-              Math.sin(time + i * 0.05 + layerOffset) * 3 +
-              Math.sin(time * 1.5 + i * 0.03 + layerOffset * 1.2) * 2
-          }
+          // Calculate current and next point radius variations
+          const radiusVariation = calculateRadiusVariation(orbState, time, i, layerOffset)
+          const nextRadiusVariation = calculateRadiusVariation(orbState, time, i + 1, layerOffset)
 
           const radius = baseRadius + radiusVariation - layer * 10
+          const nextRadius = baseRadius + nextRadiusVariation - layer * 10
+          
           const x = centerX + Math.cos(angle) * radius
           const y = centerY + Math.sin(angle) * radius
-
-          // Calculate next point for smooth curve
-          const nextRadiusVariation = orbState === "listening" 
-            ? Math.sin(time * 2 + (i + 1) * 0.1 + layerOffset) * 8 +
-              Math.sin(time * 3 + (i + 1) * 0.05 + layerOffset * 2) * 4
-            : orbState === "thinking"
-            ? Math.sin(time * 3 + (i + 1) * 0.2 + layerOffset) * 5 +
-              Math.sin(time * 2 + (i + 1) * 0.15 + layerOffset * 1.5) * 3
-            : orbState === "speaking"
-            ? Math.sin(time * 4 + (i + 1) * 0.15 + layerOffset) * 12 +
-              Math.sin(time * 5 + (i + 1) * 0.08 + layerOffset * 2) * 6
-            : Math.sin(time + (i + 1) * 0.05 + layerOffset) * 3 +
-              Math.sin(time * 1.5 + (i + 1) * 0.03 + layerOffset * 1.2) * 2
-
-          const nextRadius = baseRadius + nextRadiusVariation - layer * 10
           const nextX = centerX + Math.cos(nextAngle) * nextRadius
           const nextY = centerY + Math.sin(nextAngle) * nextRadius
 
@@ -105,29 +93,24 @@ export function PrimerOrb() {
             const cpRadius = (radius + nextRadius) / 2
             const cpX = centerX + Math.cos(cpAngle) * cpRadius
             const cpY = centerY + Math.sin(cpAngle) * cpRadius
-            ctx.quadraticCurveTo(x, y, cpX, cpY)
+            ctx.quadraticCurveTo(cpX, cpY, nextX, nextY)
           }
         }
 
-        // Close path smoothly to first point
-        ctx.quadraticCurveTo(
-          centerX + Math.cos(Math.PI * 2) * (baseRadius + (orbState === "listening" 
-            ? Math.sin(time * 2 + layerOffset) * 8 + Math.sin(time * 3 + layerOffset * 2) * 4
-            : orbState === "thinking"
-            ? Math.sin(time * 3 + layerOffset) * 5 + Math.sin(time * 2 + layerOffset * 1.5) * 3
-            : orbState === "speaking"
-            ? Math.sin(time * 4 + layerOffset) * 12 + Math.sin(time * 5 + layerOffset * 2) * 6
-            : Math.sin(time + layerOffset) * 3 + Math.sin(time * 1.5 + layerOffset * 1.2) * 2) - layer * 10),
-          centerY + Math.sin(Math.PI * 2) * (baseRadius + (orbState === "listening" 
-            ? Math.sin(time * 2 + layerOffset) * 8 + Math.sin(time * 3 + layerOffset * 2) * 4
-            : orbState === "thinking"
-            ? Math.sin(time * 3 + layerOffset) * 5 + Math.sin(time * 2 + layerOffset * 1.5) * 3
-            : orbState === "speaking"
-            ? Math.sin(time * 4 + layerOffset) * 12 + Math.sin(time * 5 + layerOffset * 2) * 6
-            : Math.sin(time + layerOffset) * 3 + Math.sin(time * 1.5 + layerOffset * 1.2) * 2) - layer * 10),
-          firstX,
-          firstY
-        )
+        // Close path smoothly to first point with final curve
+        const lastAngle = ((points - 1) / points) * Math.PI * 2
+        const firstAngle = 0
+        const lastRadiusVariation = calculateRadiusVariation(orbState, time, points - 1, layerOffset)
+        const firstRadiusVariation = calculateRadiusVariation(orbState, time, 0, layerOffset)
+        const lastRadius = baseRadius + lastRadiusVariation - layer * 10
+        const firstRadius = baseRadius + firstRadiusVariation - layer * 10
+        
+        const cpAngle = (lastAngle + firstAngle + Math.PI * 2) / 2
+        const cpRadius = (lastRadius + firstRadius) / 2
+        const cpX = centerX + Math.cos(cpAngle) * cpRadius
+        const cpY = centerY + Math.sin(cpAngle) * cpRadius
+        
+        ctx.quadraticCurveTo(cpX, cpY, firstX, firstY)
 
         ctx.closePath()
 
