@@ -10,24 +10,14 @@ import { Settings } from "lucide-react"
 export default function PrimerPage() {
   const [showSettings, setShowSettings] = useState(false)
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null)
-  const [showLanding, setShowLanding] = useState(true)
 
   // Check for API key on mount
   useEffect(() => {
     const apiKey = localStorage.getItem("primer_api_key")
-    const hasSeenLanding = localStorage.getItem("primer_has_seen_landing")
-    
     setHasApiKey(!!apiKey)
-    
-    // Show landing page if no API key or haven't seen landing before
-    if (apiKey && hasSeenLanding === "true") {
-      setShowLanding(false)
-    }
   }, [])
 
   const handleGetStarted = () => {
-    localStorage.setItem("primer_has_seen_landing", "true")
-    setShowLanding(false)
     setShowSettings(true)
   }
 
@@ -42,8 +32,8 @@ export default function PrimerPage() {
     return null
   }
 
-  // Show landing page for first-time users or when no API key
-  if (showLanding && !hasApiKey) {
+  // Show landing page when no API key is set
+  if (!hasApiKey) {
     return <LandingPage onGetStarted={handleGetStarted} />
   }
 
