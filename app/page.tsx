@@ -1,13 +1,51 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { PrimerOrb } from "@/components/primer-orb"
 import { SettingsPanel } from "@/components/settings-panel"
+import { LandingPage } from "@/components/landing-page"
 import { Button } from "@/components/ui/button"
 import { Settings } from "lucide-react"
 
 export default function PrimerPage() {
   const [showSettings, setShowSettings] = useState(false)
+  const [hasApiKey, setHasApiKey] = useState<boolean | null>(null)
+  const [showLanding, setShowLanding] = useState(true)
+
+  // Check for API key on mount
+  useEffect(() => {
+    const apiKey = localStorage.getItem("primer_api_key")
+    const hasSeenLanding = localStorage.getItem("primer_has_seen_landing")
+    
+    setHasApiKey(!!apiKey)
+    
+    // Show landing page if no API key or haven't seen landing before
+    if (apiKey && hasSeenLanding === "true") {
+      setShowLanding(false)
+    }
+  }, [])
+
+  const handleGetStarted = () => {
+    localStorage.setItem("primer_has_seen_landing", "true")
+    setShowLanding(false)
+    setShowSettings(true)
+  }
+
+  const handleApiKeySaved = () => {
+    // Re-check if API key is now set
+    const apiKey = localStorage.getItem("primer_api_key")
+    setHasApiKey(!!apiKey)
+  }
+
+  // Show loading state while checking localStorage
+  if (hasApiKey === null) {
+    return null
+  }
+
+  // Show landing page for first-time users or when no API key
+  if (showLanding && !hasApiKey) {
+    return <LandingPage onGetStarted={handleGetStarted} />
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -70,7 +108,7 @@ export default function PrimerPage() {
       </main>
 
       {/* Settings panel */}
-      <SettingsPanel open={showSettings} onOpenChange={setShowSettings} />
+      <SettingsPanel open={showSettings} onOpenChange={setShowSettings} onApiKeySaved={handleApiKeySaved} />
     </div>
   )
 }
