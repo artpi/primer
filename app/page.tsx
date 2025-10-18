@@ -17,7 +17,7 @@ export default function PrimerPage() {
     setHasApiKey(!!apiKey)
   }, [])
 
-  const handleGetStarted = () => {
+  const handleOpenSettings = () => {
     setShowSettings(true)
   }
 
@@ -34,7 +34,7 @@ export default function PrimerPage() {
 
   // Show landing page when no API key is set
   if (!hasApiKey) {
-    return <LandingPage onGetStarted={handleGetStarted} />
+    return <LandingPage onGetStarted={handleOpenSettings} />
   }
 
   return (
