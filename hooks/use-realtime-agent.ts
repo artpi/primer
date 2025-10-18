@@ -182,9 +182,9 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 						input: {
 							turnDetection: {
 								type: "server_vad" as const,
-								threshold: 0.5,
-								prefixPaddingMs: 300,
-								silenceDurationMs: 600,
+								threshold: 0.6,
+								prefixPaddingMs: 500,
+								silenceDurationMs: 1000,
 							},
 							transcription: {
 								model: "gpt-4o-mini-transcribe",
@@ -220,6 +220,15 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 			setIsConnected(true)
 			handleStateChange("listening")
 			console.log("[Primer] Ready to chat!")
+
+			// Send a welcome message to trigger the agent to greet the user
+			// This simulates the agent greeting the child when they connect
+			setTimeout(() => {
+				if (sessionRef.current) {
+					console.log("[Primer] Triggering welcome greeting...")
+					sessionRef.current.sendMessage("Hello! Please introduce yourself and let me know you're ready to help me learn.")
+				}
+			}, 500)
 		}
 		catch (error) {
 			console.error("[Primer] Failed to connect to realtime session", error)
