@@ -180,6 +180,10 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 					tools: [],
 					audio: {
 						input: {
+							// Voice Activity Detection (VAD) settings tuned to prevent false interruptions
+							// Higher threshold = less sensitive to noise, reducing false positives
+							// Longer silence duration = waits longer before considering turn complete
+							// Larger prefix padding = captures more audio before speech detection
 							turnDetection: {
 								type: "server_vad" as const,
 								threshold: 0.6,
