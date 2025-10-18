@@ -8,14 +8,24 @@ type OrbState = "idle" | "listening" | "thinking" | "speaking"
 
 export function PrimerOrb() {
   const [orbState, setOrbState] = useState<OrbState>("idle")
+  const [pushToTalkMode, setPushToTalkMode] = useState(true)
+  const [isPressing, setIsPressing] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number | undefined>(undefined)
 
-  const { isConnected, connect, disconnect } = useRealtimeAgent({
+  const { isConnected, connect, disconnect, startPushToTalk, stopPushToTalk } = useRealtimeAgent({
     onStateChange: (state) => {
       setOrbState(state)
     },
   })
+
+  // Load push-to-talk setting
+  useEffect(() => {
+    const savedPushToTalk = localStorage.getItem("primer_push_to_talk")
+    if (savedPushToTalk !== null) {
+      setPushToTalkMode(savedPushToTalk === "true")
+    }
+  }, [])
 
   // Orb animation
   useEffect(() => {
@@ -126,6 +136,20 @@ export function PrimerOrb() {
     setOrbState("idle")
   }
 
+  const handlePushToTalkStart = () => {
+    if (isConnected && pushToTalkMode) {
+      setIsPressing(true)
+      startPushToTalk()
+    }
+  }
+
+  const handlePushToTalkStop = () => {
+    if (isConnected && pushToTalkMode && isPressing) {
+      setIsPressing(false)
+      stopPushToTalk()
+    }
+  }
+
   return (
     <div className="flex flex-col items-center gap-8">
       {/* Orb container */}
@@ -146,9 +170,22 @@ export function PrimerOrb() {
         {/* Canvas orb */}
         <button
           onClick={handleOrbClick}
-          disabled={isConnected}
+          onMouseDown={handlePushToTalkStart}
+          onMouseUp={handlePushToTalkStop}
+          onMouseLeave={handlePushToTalkStop}
+          onTouchStart={handlePushToTalkStart}
+          onTouchEnd={handlePushToTalkStop}
+          disabled={!isConnected && !pushToTalkMode ? false : isConnected && !pushToTalkMode}
           className="relative block rounded-full overflow-hidden shadow-2xl transition-transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-primary/50 disabled:cursor-default disabled:hover:scale-100"
-          aria-label={isConnected ? "Connected - speak to Primer" : "Connect to Primer"}
+          aria-label={
+            !isConnected
+              ? "Connect to Primer"
+              : pushToTalkMode
+                ? isPressing
+                  ? "Release to send"
+                  : "Hold to speak"
+                : "Connected - speak to Primer"
+          }
         >
           <canvas ref={canvasRef} width={300} height={300} className="w-[300px] h-[300px]" />
         </button>
@@ -157,8 +194,10 @@ export function PrimerOrb() {
         <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-card/90 backdrop-blur-sm shadow-lg border">
           <p className="text-sm font-medium">
             {!isConnected && "Click to start"}
-            {isConnected && orbState === "idle" && "Ready to chat"}
-            {orbState === "listening" && "Listening..."}
+            {isConnected && pushToTalkMode && !isPressing && orbState === "listening" && "Hold to speak"}
+            {isConnected && pushToTalkMode && isPressing && "Release to send"}
+            {isConnected && !pushToTalkMode && orbState === "idle" && "Ready to chat"}
+            {orbState === "listening" && !pushToTalkMode && "Listening..."}
             {orbState === "thinking" && "Thinking..."}
             {orbState === "speaking" && "Speaking..."}
           </p>
@@ -180,7 +219,9 @@ export function PrimerOrb() {
 
       {isConnected && (
         <p className="text-sm text-muted-foreground text-center max-w-md">
-          Just start speaking! Primer is listening and will respond automatically.
+          {pushToTalkMode
+            ? "Press and hold the orb while speaking, then release to send your message."
+            : "Just start speaking! Primer is listening and will respond automatically."}
         </p>
       )}
     </div>

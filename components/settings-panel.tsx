@@ -29,20 +29,24 @@ Always maintain a friendly, supportive tone and adapt your explanations to the c
 export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
   const [apiKey, setApiKey] = useState("")
   const [systemPrompt, setSystemPrompt] = useState(DEFAULT_PROMPT)
+  const [pushToTalk, setPushToTalk] = useState(true)
   const [saved, setSaved] = useState(false)
 
   // Load settings from localStorage
   useEffect(() => {
     const savedApiKey = localStorage.getItem("primer_api_key")
     const savedPrompt = localStorage.getItem("primer_system_prompt")
+    const savedPushToTalk = localStorage.getItem("primer_push_to_talk")
 
     if (savedApiKey) setApiKey(savedApiKey)
     if (savedPrompt) setSystemPrompt(savedPrompt)
+    if (savedPushToTalk !== null) setPushToTalk(savedPushToTalk === "true")
   }, [])
 
   const handleSave = () => {
     localStorage.setItem("primer_api_key", apiKey)
     localStorage.setItem("primer_system_prompt", systemPrompt)
+    localStorage.setItem("primer_push_to_talk", pushToTalk.toString())
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
   }
@@ -87,6 +91,41 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
                   OpenAI's platform
                 </a>
                 .
+              </AlertDescription>
+            </Alert>
+          </div>
+
+          {/* Push-to-Talk Setting */}
+          <div className="space-y-3">
+            <Label htmlFor="push-to-talk" className="text-base font-semibold">
+              Voice Input Mode
+            </Label>
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="push-to-talk"
+                checked={pushToTalk}
+                onChange={(e) => setPushToTalk(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <Label htmlFor="push-to-talk" className="font-normal cursor-pointer">
+                Push-to-talk mode (hold orb to speak)
+              </Label>
+            </div>
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                {pushToTalk ? (
+                  <>
+                    <strong>Push-to-talk enabled:</strong> Press and hold the orb while speaking. This gives you full
+                    control and prevents accidental activations.
+                  </>
+                ) : (
+                  <>
+                    <strong>Automatic mode:</strong> Primer will automatically detect when you're speaking. The session
+                    will auto-disconnect after 15 seconds of inactivity.
+                  </>
+                )}
               </AlertDescription>
             </Alert>
           </div>
