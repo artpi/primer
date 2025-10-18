@@ -46,60 +46,121 @@ export function PrimerOrb() {
 
         ctx.beginPath()
 
-        for (let i = 0; i <= points; i++) {
-          const angle = (i / points) * Math.PI * 2
+        // Store first point coordinates to ensure perfect closure
+        let firstX = 0
+        let firstY = 0
 
-          // Different wave patterns based on state
+        for (let i = 0; i < points; i++) {
+          const angle = (i / points) * Math.PI * 2
+          const nextAngle = ((i + 1) / points) * Math.PI * 2
+
+          // Different wave patterns based on state with multiple harmonics for cloud-like effect
           let radiusVariation = 0
           if (orbState === "listening") {
-            radiusVariation = Math.sin(time * 2 + i * 0.1 + layerOffset) * 8
+            radiusVariation = 
+              Math.sin(time * 2 + i * 0.1 + layerOffset) * 8 +
+              Math.sin(time * 3 + i * 0.05 + layerOffset * 2) * 4
           } else if (orbState === "thinking") {
-            radiusVariation = Math.sin(time * 3 + i * 0.2 + layerOffset) * 5
+            radiusVariation = 
+              Math.sin(time * 3 + i * 0.2 + layerOffset) * 5 +
+              Math.sin(time * 2 + i * 0.15 + layerOffset * 1.5) * 3
           } else if (orbState === "speaking") {
-            radiusVariation = Math.sin(time * 4 + i * 0.15 + layerOffset) * 12
+            radiusVariation = 
+              Math.sin(time * 4 + i * 0.15 + layerOffset) * 12 +
+              Math.sin(time * 5 + i * 0.08 + layerOffset * 2) * 6
           } else {
-            radiusVariation = Math.sin(time + i * 0.05 + layerOffset) * 3
+            radiusVariation = 
+              Math.sin(time + i * 0.05 + layerOffset) * 3 +
+              Math.sin(time * 1.5 + i * 0.03 + layerOffset * 1.2) * 2
           }
 
           const radius = baseRadius + radiusVariation - layer * 10
           const x = centerX + Math.cos(angle) * radius
           const y = centerY + Math.sin(angle) * radius
 
+          // Calculate next point for smooth curve
+          const nextRadiusVariation = orbState === "listening" 
+            ? Math.sin(time * 2 + (i + 1) * 0.1 + layerOffset) * 8 +
+              Math.sin(time * 3 + (i + 1) * 0.05 + layerOffset * 2) * 4
+            : orbState === "thinking"
+            ? Math.sin(time * 3 + (i + 1) * 0.2 + layerOffset) * 5 +
+              Math.sin(time * 2 + (i + 1) * 0.15 + layerOffset * 1.5) * 3
+            : orbState === "speaking"
+            ? Math.sin(time * 4 + (i + 1) * 0.15 + layerOffset) * 12 +
+              Math.sin(time * 5 + (i + 1) * 0.08 + layerOffset * 2) * 6
+            : Math.sin(time + (i + 1) * 0.05 + layerOffset) * 3 +
+              Math.sin(time * 1.5 + (i + 1) * 0.03 + layerOffset * 1.2) * 2
+
+          const nextRadius = baseRadius + nextRadiusVariation - layer * 10
+          const nextX = centerX + Math.cos(nextAngle) * nextRadius
+          const nextY = centerY + Math.sin(nextAngle) * nextRadius
+
           if (i === 0) {
             ctx.moveTo(x, y)
+            firstX = x
+            firstY = y
           } else {
-            ctx.lineTo(x, y)
+            // Use quadratic curves for smoother, cloud-like appearance
+            const cpAngle = (angle + nextAngle) / 2
+            const cpRadius = (radius + nextRadius) / 2
+            const cpX = centerX + Math.cos(cpAngle) * cpRadius
+            const cpY = centerY + Math.sin(cpAngle) * cpRadius
+            ctx.quadraticCurveTo(x, y, cpX, cpY)
           }
         }
 
+        // Close path smoothly to first point
+        ctx.quadraticCurveTo(
+          centerX + Math.cos(Math.PI * 2) * (baseRadius + (orbState === "listening" 
+            ? Math.sin(time * 2 + layerOffset) * 8 + Math.sin(time * 3 + layerOffset * 2) * 4
+            : orbState === "thinking"
+            ? Math.sin(time * 3 + layerOffset) * 5 + Math.sin(time * 2 + layerOffset * 1.5) * 3
+            : orbState === "speaking"
+            ? Math.sin(time * 4 + layerOffset) * 12 + Math.sin(time * 5 + layerOffset * 2) * 6
+            : Math.sin(time + layerOffset) * 3 + Math.sin(time * 1.5 + layerOffset * 1.2) * 2) - layer * 10),
+          centerY + Math.sin(Math.PI * 2) * (baseRadius + (orbState === "listening" 
+            ? Math.sin(time * 2 + layerOffset) * 8 + Math.sin(time * 3 + layerOffset * 2) * 4
+            : orbState === "thinking"
+            ? Math.sin(time * 3 + layerOffset) * 5 + Math.sin(time * 2 + layerOffset * 1.5) * 3
+            : orbState === "speaking"
+            ? Math.sin(time * 4 + layerOffset) * 12 + Math.sin(time * 5 + layerOffset * 2) * 6
+            : Math.sin(time + layerOffset) * 3 + Math.sin(time * 1.5 + layerOffset * 1.2) * 2) - layer * 10),
+          firstX,
+          firstY
+        )
+
         ctx.closePath()
 
-        // Color based on state
+        // Color based on state with softer, more cloud-like gradients
         let gradient
         if (orbState === "listening") {
           gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, baseRadius)
-          gradient.addColorStop(0, "rgba(139, 92, 246, 0.6)")
-          gradient.addColorStop(1, "rgba(59, 130, 246, 0.3)")
+          gradient.addColorStop(0, "rgba(139, 92, 246, 0.7)")
+          gradient.addColorStop(0.5, "rgba(99, 102, 241, 0.5)")
+          gradient.addColorStop(1, "rgba(59, 130, 246, 0.2)")
         } else if (orbState === "thinking") {
           gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, baseRadius)
-          gradient.addColorStop(0, "rgba(236, 72, 153, 0.6)")
-          gradient.addColorStop(1, "rgba(139, 92, 246, 0.3)")
+          gradient.addColorStop(0, "rgba(236, 72, 153, 0.7)")
+          gradient.addColorStop(0.5, "rgba(168, 85, 247, 0.5)")
+          gradient.addColorStop(1, "rgba(139, 92, 246, 0.2)")
         } else if (orbState === "speaking") {
           gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, baseRadius)
-          gradient.addColorStop(0, "rgba(251, 191, 36, 0.6)")
-          gradient.addColorStop(1, "rgba(245, 158, 11, 0.3)")
+          gradient.addColorStop(0, "rgba(251, 191, 36, 0.7)")
+          gradient.addColorStop(0.5, "rgba(251, 146, 60, 0.5)")
+          gradient.addColorStop(1, "rgba(245, 158, 11, 0.2)")
         } else {
           gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, baseRadius)
-          gradient.addColorStop(0, "rgba(139, 92, 246, 0.4)")
-          gradient.addColorStop(1, "rgba(99, 102, 241, 0.2)")
+          gradient.addColorStop(0, "rgba(139, 92, 246, 0.5)")
+          gradient.addColorStop(0.5, "rgba(124, 58, 237, 0.3)")
+          gradient.addColorStop(1, "rgba(99, 102, 241, 0.1)")
         }
 
         ctx.fillStyle = gradient
         ctx.fill()
 
-        // Add glow
-        ctx.shadowBlur = 20
-        ctx.shadowColor = orbState === "speaking" ? "rgba(251, 191, 36, 0.5)" : "rgba(139, 92, 246, 0.5)"
+        // Add softer, more diffuse glow for cloud-like effect
+        ctx.shadowBlur = 30
+        ctx.shadowColor = orbState === "speaking" ? "rgba(251, 191, 36, 0.4)" : "rgba(139, 92, 246, 0.4)"
       }
 
       time += 0.02
