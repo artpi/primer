@@ -39,12 +39,30 @@ jobs:
           fi
           echo "Build output verified at ./out"
 
-      - name: Deploy preview
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./out
-          destination_dir: unsafe_preview/pr-${{ github.event.number }}
+          ref: gh-pages
+          path: gh-pages
+          fetch-depth: 0
+
+      - name: Deploy preview
+        run: |
+          set -euo pipefail
+          PREVIEW_DIR="unsafe_preview/pr-${{ github.event.number }}"
+          rm -rf "gh-pages/${PREVIEW_DIR}"
+          mkdir -p "gh-pages/${PREVIEW_DIR}"
+          cp -a out/. "gh-pages/${PREVIEW_DIR}/"
+          cd gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A "${PREVIEW_DIR}"
+          if git diff --staged --quiet; then
+            echo "Preview is up to date; nothing to commit."
+          else
+            git commit -m "Deploy preview for PR #${{ github.event.number }}"
+            git push
+          fi
 
       - name: Comment preview link
         uses: marocchino/sticky-pull-request-comment@v2

@@ -53,9 +53,27 @@ jobs:
       - name: Build with Next.js
         run: npm run build
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./out
-          # Deploy to root of gh-pages branch
+          ref: gh-pages
+          path: gh-pages
+          fetch-depth: 0
+
+      - name: Deploy to GitHub Pages
+        run: |
+          set -euo pipefail
+          cd gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          mkdir -p unsafe_preview
+          find . -maxdepth 1 -type f -name '*.html' -delete
+          rm -rf ./_next
+          cp -a ../out/. ./
+          git add -A
+          if git diff --staged --quiet; then
+            echo "Production site is up to date; nothing to commit."
+          else
+            git commit -m "Deploy production site for ${{ github.sha }}"
+            git push
+          fi
