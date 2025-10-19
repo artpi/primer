@@ -9,12 +9,52 @@ jobs:
     name: Run Checks
     if: ${{ github.event.pull_request.draft == false && github.event.pull_request.state == 'open' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write       # needed to push to gh-pages
+      pull-requests: write  # needed to comment on PR
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
 
       - name: Run checks
         run: npm run check
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify build output
+        run: |
+          if [ ! -d "./out" ]; then
+            echo "Error: Build output directory './out' does not exist"
+            exit 1
+          fi
+          echo "Build output verified at ./out"
+
+      - name: Deploy preview
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./out
+          destination_dir: unsafe_preview/pr-${{ github.event.number }}
+
+      - name: Comment preview link
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: preview-link
+          message: |
+            🚀 **Preview deployed!**
+
+            Preview URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/unsafe_preview/pr-${{ github.event.number }}/
+
+            ⚠️ This is an unsafe preview - the code has not been reviewed or approved yet.
+
+            This preview will be automatically cleaned up when the PR is closed or merged.
