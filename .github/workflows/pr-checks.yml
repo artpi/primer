@@ -44,7 +44,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./out
-          destination_dir: preview/pr-${{ github.event.number }}
+          destination_dir: unsafe_preview/pr-${{ github.event.number }}
 
       - name: Comment preview link
         uses: marocchino/sticky-pull-request-comment@v2
@@ -53,6 +53,8 @@ jobs:
           message: |
             🚀 **Preview deployed!**
 
-            Preview URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/preview/pr-${{ github.event.number }}/
+            Preview URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/unsafe_preview/pr-${{ github.event.number }}/
+
+            ⚠️ This is an unsafe preview - the code has not been reviewed or approved yet.
 
             This preview will be automatically cleaned up when the PR is closed or merged.

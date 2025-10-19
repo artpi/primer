@@ -19,10 +19,10 @@ jobs:
 
       - name: Remove preview directory
         run: |
-          if [ -d "preview/pr-${{ github.event.number }}" ]; then
+          if [ -d "unsafe_preview/pr-${{ github.event.number }}" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git rm -rf "preview/pr-${{ github.event.number }}"
+            git rm -rf "unsafe_preview/pr-${{ github.event.number }}"
             git commit -m "Remove preview for PR #${{ github.event.number }}"
             git push
           else
