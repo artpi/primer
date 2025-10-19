@@ -34,6 +34,7 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 	const sessionRef = useRef<RealtimeSession | undefined>(undefined)
 	const agentRef = useRef<RealtimeAgent | undefined>(undefined)
 	const audioElementRef = useRef<HTMLAudioElement | undefined>(undefined)
+	const initialMuteTimeoutRef = useRef<number | undefined>(undefined)
 
 	useEffect(() => {
 		return () => {
@@ -217,19 +218,36 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 			console.log("[Primer] Current agent:", session.currentAgent.name)
 			console.log("[Primer] Microphone should be active now")
 
-                        setIsConnected(true)
-                        handleStateChange("listening")
-                        console.log("[Primer] Ready to chat!")
+			setIsConnected(true)
+			handleStateChange("listening")
+			console.log("[Primer] Ready to chat!")
 
-                        const welcomeInstructions =
-                                "Speak a short, encouraging welcome so the child knows you are ready to chat. Say something like: \"Hi there! I'm Primer, your learning buddy. What would you like to explore today?\""
+			const welcomeInstructions =
+				"Speak a short, encouraging welcome so the child knows you are ready to chat. Say something like: \"Hi there! I'm Primer, your learning buddy. What would you like to explore today?\""
 
-                        session.transport.sendEvent({
-                                type: "response.create",
-                                response: {
-                                        instructions: welcomeInstructions,
-                                },
-                        })
+			session.mute(true)
+			console.log("[Primer] Muted microphone for welcome message")
+
+			if (initialMuteTimeoutRef.current) {
+				window.clearTimeout(initialMuteTimeoutRef.current)
+			}
+
+			initialMuteTimeoutRef.current = window.setTimeout(() => {
+				if (!sessionRef.current) {
+					return
+				}
+
+				sessionRef.current.mute(false)
+				initialMuteTimeoutRef.current = undefined
+				console.log("[Primer] Unmuted microphone after welcome window")
+			}, 5000)
+
+			session.transport.sendEvent({
+				type: "response.create",
+				response: {
+					instructions: welcomeInstructions,
+				},
+			})
 		}
 		catch (error) {
 			console.error("[Primer] Failed to connect to realtime session", error)
@@ -242,6 +260,11 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 		}
 		finally {
 			setIsConnecting(false)
+
+			if (initialMuteTimeoutRef.current) {
+				window.clearTimeout(initialMuteTimeoutRef.current)
+				initialMuteTimeoutRef.current = undefined
+			}
 		}
 	}, [handleStateChange, isConnected, isConnecting, registerSessionListeners])
 
@@ -257,6 +280,11 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 			audioElementRef.current.src = ""
 			audioElementRef.current = undefined
 			console.log("[Primer] Audio element cleaned up")
+		}
+
+		if (initialMuteTimeoutRef.current) {
+			window.clearTimeout(initialMuteTimeoutRef.current)
+			initialMuteTimeoutRef.current = undefined
 		}
 		setIsConnected(false)
 		setLatestResponse("")
