@@ -182,15 +182,15 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 						input: {
 							turnDetection: {
 								type: "server_vad" as const,
-								threshold: 0.5,
-								prefixPaddingMs: 300,
-								silenceDurationMs: 600,
+								threshold: 0.65,
+								prefixPaddingMs: 450,
+								silenceDurationMs: 1200,
 							},
 							transcription: {
 								model: "gpt-4o-mini-transcribe",
 							},
 						},
-						output: {
+					output: {
 							voice: "alloy",
 						},
 					},
@@ -217,9 +217,19 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 			console.log("[Primer] Current agent:", session.currentAgent.name)
 			console.log("[Primer] Microphone should be active now")
 
-			setIsConnected(true)
-			handleStateChange("listening")
-			console.log("[Primer] Ready to chat!")
+                        setIsConnected(true)
+                        handleStateChange("listening")
+                        console.log("[Primer] Ready to chat!")
+
+                        const welcomeInstructions =
+                                "Speak a short, encouraging welcome so the child knows you are ready to chat. Say something like: \"Hi there! I'm Primer, your learning buddy. What would you like to explore today?\""
+
+                        session.transport.sendEvent({
+                                type: "response.create",
+                                response: {
+                                        instructions: welcomeInstructions,
+                                },
+                        })
 		}
 		catch (error) {
 			console.error("[Primer] Failed to connect to realtime session", error)
