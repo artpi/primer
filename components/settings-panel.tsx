@@ -12,6 +12,7 @@ import { Info, Save } from "lucide-react"
 interface SettingsPanelProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onApiKeySaved?: () => void
 }
 
 const DEFAULT_PROMPT = `You are Primer, a magical learning companion for children inspired by "The Young Lady's Illustrated Primer" from Neal Stephenson's Diamond Age. 
@@ -26,7 +27,7 @@ Your role is to:
 
 Always maintain a friendly, supportive tone and adapt your explanations to the child's level of understanding.`
 
-export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
+export function SettingsPanel({ open, onOpenChange, onApiKeySaved }: SettingsPanelProps) {
   const [apiKey, setApiKey] = useState("")
   const [systemPrompt, setSystemPrompt] = useState(DEFAULT_PROMPT)
   const [saved, setSaved] = useState(false)
@@ -45,6 +46,11 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
     localStorage.setItem("primer_system_prompt", systemPrompt)
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
+    
+    // Notify parent component that API key was saved
+    if (onApiKeySaved) {
+      onApiKeySaved()
+    }
   }
 
   const handleReset = () => {
@@ -75,18 +81,36 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
             />
             <Alert>
               <Info className="h-4 w-4" />
-              <AlertDescription className="text-sm">
-                Your API key is stored locally in your browser and never sent to our servers. When you connect, it's
-                exchanged for a short-lived ephemeral key for secure WebRTC communication. Get your key from{" "}
-                <a
-                  href="https://platform.openai.com/api-keys"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-primary"
-                >
-                  OpenAI's platform
-                </a>
-                .
+              <AlertDescription className="text-sm space-y-2">
+                <p>
+                  Your API key is stored locally in your browser and never sent to our servers. When you connect, it's
+                  exchanged for a short-lived ephemeral key for secure WebRTC communication.
+                </p>
+                <div className="space-y-1">
+                  <p className="font-semibold">How to get your API key:</p>
+                  <ol className="list-decimal list-inside space-y-1 ml-2">
+                    <li>
+                      Visit{" "}
+                      <a
+                        href="https://platform.openai.com/api-keys"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline hover:text-primary"
+                      >
+                        OpenAI's API Keys page
+                      </a>
+                    </li>
+                    <li>Sign in or create an account</li>
+                    <li>Add billing information (required for API access)</li>
+                    <li>Click "Create new secret key" and copy it</li>
+                    <li>Paste it above and click Save</li>
+                  </ol>
+                </div>
+                <p className="font-semibold pt-2">💡 Best Practice:</p>
+                <p>
+                  Create a separate OpenAI project just for Primer. This allows you to track usage separately and set
+                  spending limits to control costs (~$0.10-0.30 per hour of conversation).
+                </p>
               </AlertDescription>
             </Alert>
           </div>
