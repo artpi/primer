@@ -218,14 +218,16 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 					audio: {
 						input: {
 							// Voice Activity Detection (VAD) settings
-							// In push-to-talk mode, turn detection is disabled (null)
+							// In push-to-talk mode, turn detection is disabled (undefined)
 							// In automatic mode, VAD is tuned to prevent false interruptions
-							turnDetection: pushToTalk ? null : {
-								type: "server_vad" as const,
-								threshold: 0.6,
-								prefixPaddingMs: 500,
-								silenceDurationMs: 1000,
-							},
+							...(pushToTalk ? {} : {
+								turnDetection: {
+									type: "server_vad" as const,
+									threshold: 0.6,
+									prefixPaddingMs: 500,
+									silenceDurationMs: 1000,
+								},
+							}),
 							transcription: {
 								model: "gpt-4o-mini-transcribe",
 							},
