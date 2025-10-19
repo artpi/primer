@@ -20,6 +20,8 @@ interface UseRealtimeAgentResult {
 	connect: () => Promise<void>
 	disconnect: () => void
 	interrupt: () => void
+	startPushToTalk: () => void
+	stopPushToTalk: () => void
 }
 
 export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseRealtimeAgentResult {
@@ -34,6 +36,8 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 	const sessionRef = useRef<RealtimeSession | undefined>(undefined)
 	const agentRef = useRef<RealtimeAgent | undefined>(undefined)
 	const audioElementRef = useRef<HTMLAudioElement | undefined>(undefined)
+	const inactivityTimerRef = useRef<NodeJS.Timeout | undefined>(undefined)
+	const isPushToTalkActiveRef = useRef(false)
 
 	useEffect(() => {
 		return () => {
@@ -44,12 +48,42 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 		}
 	}, [])
 
+	const clearInactivityTimer = useCallback(() => {
+		if (inactivityTimerRef.current) {
+			clearTimeout(inactivityTimerRef.current)
+			inactivityTimerRef.current = undefined
+		}
+	}, [])
+
+	const startInactivityTimer = useCallback(() => {
+		// Only start timer in automatic mode (not push-to-talk)
+		const pushToTalk = localStorage.getItem("primer_push_to_talk") === "true"
+		if (pushToTalk) return
+
+		clearInactivityTimer()
+		console.log("[Primer] Starting 15-second inactivity timer")
+		inactivityTimerRef.current = setTimeout(() => {
+			console.log("[Primer] Inactivity timeout - disconnecting")
+			if (sessionRef.current) {
+				sessionRef.current.close()
+				sessionRef.current = undefined
+			}
+			setIsConnected(false)
+			handleStateChange("idle")
+		}, 15000) // 15 seconds
+	}, [clearInactivityTimer])
+
 	const handleStateChange = useCallback(
 		(nextState: OrbState) => {
 			setCurrentState(nextState)
 			onStateChange?.(nextState)
+
+			// Reset inactivity timer when agent is speaking or thinking
+			if (nextState === "speaking" || nextState === "thinking") {
+				clearInactivityTimer()
+			}
 		},
-		[onStateChange],
+		[onStateChange, clearInactivityTimer],
 	)
 
 	const registerSessionListeners = useCallback(
@@ -81,6 +115,8 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 			session.on("audio_stopped", (context, agent) => {
 				console.log("[Primer] Audio output stopped", { agent: agent.name })
 				handleStateChange("listening")
+				// Start inactivity timer after agent finishes speaking (only in automatic mode)
+				startInactivityTimer()
 			})
 
 			session.on("audio_interrupted", (context, agent) => {
@@ -112,7 +148,7 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 				handleStateChange("idle")
 			})
 		},
-		[handleStateChange],
+		[handleStateChange, startInactivityTimer],
 	)
 
 	const connect = useCallback(async () => {
@@ -125,6 +161,7 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 		const systemPrompt =
 			localStorage.getItem("primer_system_prompt") ||
 			"You are Primer, a friendly and patient AI tutor for children. You explain things in simple, engaging ways and encourage curiosity and learning. You are kind, supportive, and always make learning fun."
+		const pushToTalk = localStorage.getItem("primer_push_to_talk") === "true"
 
 		if (!apiKey) {
 			alert("Please set your OpenAI API key in settings first!")
@@ -180,12 +217,17 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 					tools: [],
 					audio: {
 						input: {
-							turnDetection: {
-								type: "server_vad" as const,
-								threshold: 0.5,
-								prefixPaddingMs: 300,
-								silenceDurationMs: 600,
-							},
+							// Voice Activity Detection (VAD) settings
+							// In push-to-talk mode, turn detection is disabled (undefined)
+							// In automatic mode, VAD is tuned to prevent false interruptions
+							...(pushToTalk ? {} : {
+								turnDetection: {
+									type: "server_vad" as const,
+									threshold: 0.6,
+									prefixPaddingMs: 500,
+									silenceDurationMs: 1000,
+								},
+							}),
 							transcription: {
 								model: "gpt-4o-mini-transcribe",
 							},
@@ -220,6 +262,15 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 			setIsConnected(true)
 			handleStateChange("listening")
 			console.log("[Primer] Ready to chat!")
+
+			// Send a welcome message to trigger the agent to greet the user
+			// This simulates the agent greeting the child when they connect
+			setTimeout(() => {
+				if (sessionRef.current) {
+					console.log("[Primer] Triggering welcome greeting...")
+					sessionRef.current.sendMessage("Hello! Please introduce yourself and let me know you're ready to help me learn.")
+				}
+			}, 500)
 		}
 		catch (error) {
 			console.error("[Primer] Failed to connect to realtime session", error)
@@ -237,6 +288,7 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 
 	const disconnect = useCallback(() => {
 		console.log("[Primer] Disconnecting...")
+		clearInactivityTimer()
 		if (sessionRef.current) {
 			sessionRef.current.close()
 			sessionRef.current = undefined
@@ -253,7 +305,7 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 		setLatestTranscript("")
 		handleStateChange("idle")
 		console.log("[Primer] Disconnected successfully")
-	}, [handleStateChange])
+	}, [handleStateChange, clearInactivityTimer])
 
 	const interrupt = useCallback(() => {
 		console.log("[Primer] Interrupting current response...")
@@ -261,6 +313,26 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 			sessionRef.current.interrupt()
 			handleStateChange("listening")
 			console.log("[Primer] Response interrupted")
+		}
+	}, [handleStateChange])
+
+	const startPushToTalk = useCallback(() => {
+		console.log("[Primer] Push-to-talk: Starting to listen")
+		clearInactivityTimer()
+		isPushToTalkActiveRef.current = true
+		// In push-to-talk mode, we manually start audio input
+		// The session is already connected, we just need to signal we're ready to receive audio
+		handleStateChange("listening")
+	}, [handleStateChange, clearInactivityTimer])
+
+	const stopPushToTalk = useCallback(() => {
+		console.log("[Primer] Push-to-talk: Stopped listening, committing audio")
+		isPushToTalkActiveRef.current = false
+		// Commit the audio buffer to trigger the agent response
+		if (sessionRef.current) {
+			// The realtime API will automatically process the audio when we stop
+			// and trigger the agent response
+			handleStateChange("thinking")
 		}
 	}, [handleStateChange])
 
@@ -273,6 +345,8 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 		connect,
 		disconnect,
 		interrupt,
+		startPushToTalk,
+		stopPushToTalk,
 	}
 }
 
