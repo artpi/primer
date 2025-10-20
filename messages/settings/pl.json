@@ -4,11 +4,7 @@
   "description": "Skonfiguruj zachowanie i ustawienia połączenia Primer",
   "language": {
     "label": "Język",
-    "description": "Wybierz, w jakim języku mówi Primer i interfejs. To ustawienie automatycznie aktualizuje prompt systemowy.",
-    "options": {
-      "en": "Angielski",
-      "pl": "Polski"
-    }
+    "description": "Wybierz, w jakim języku mówi Primer i interfejs. To ustawienie automatycznie aktualizuje prompt systemowy."
   },
   "apiKey": {
     "label": "Klucz API OpenAI",

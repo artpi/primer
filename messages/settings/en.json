@@ -4,11 +4,7 @@
   "description": "Configure Primer's behavior and connection settings",
   "language": {
     "label": "Language",
-    "description": "Choose how Primer and the interface speak. This also updates the system prompt automatically.",
-    "options": {
-      "en": "English",
-      "pl": "Polski"
-    }
+    "description": "Choose how Primer and the interface speak. This also updates the system prompt automatically."
   },
   "apiKey": {
     "label": "OpenAI API Key",

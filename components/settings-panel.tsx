@@ -13,6 +13,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { useLanguage } from "@/components/language-provider"
 import { locales, type Locale, isLocale } from "@/lib/i18n/config"
 
+const LANGUAGE_DISPLAY_NAMES: Record<Locale, string> = {
+  en: "🇬🇧 English",
+  pl: "🇵🇱 Polski",
+}
+
 interface SettingsPanelProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -109,7 +114,7 @@ export function SettingsPanel({ open, onOpenChange, onApiKeyChange }: SettingsPa
             >
               {locales.map((code) => (
                 <option key={code} value={code}>
-                  {t(`language.options.${code}` as const)}
+                  {LANGUAGE_DISPLAY_NAMES[code]}
                 </option>
               ))}
             </select>
