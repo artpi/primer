@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { useRealtimeAgent } from "@/hooks/use-realtime-agent"
 
-type OrbState = "idle" | "listening" | "thinking" | "speaking"
+type OrbState = "idle" | "muted" | "listening" | "thinking" | "speaking"
 
 export function PrimerOrb() {
   const [orbState, setOrbState] = useState<OrbState>("idle")
@@ -158,6 +158,7 @@ export function PrimerOrb() {
           <p className="text-sm font-medium">
             {!isConnected && "Click to start"}
             {isConnected && orbState === "idle" && "Ready to chat"}
+            {isConnected && orbState === "muted" && "Getting ready..."}
             {orbState === "listening" && "Listening..."}
             {orbState === "thinking" && "Thinking..."}
             {orbState === "speaking" && "Speaking..."}
@@ -178,9 +179,14 @@ export function PrimerOrb() {
         </div>
       )}
 
-      {isConnected && (
+      {isConnected && orbState !== "muted" && (
         <p className="text-sm text-muted-foreground text-center max-w-md">
           Just start speaking! Primer is listening and will respond automatically.
+        </p>
+      )}
+      {isConnected && orbState === "muted" && (
+        <p className="text-sm text-muted-foreground text-center max-w-md">
+          Primer is saying hello—your microphone will open in just a moment.
         </p>
       )}
     </div>
