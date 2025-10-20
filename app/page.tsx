@@ -20,11 +20,11 @@ function LandingContent({ onGetStarted }: LandingContentProps) {
               Open source · Realtime AI · Built for families
             </span>
             <h1 className="text-4xl font-semibold leading-tight text-foreground md:text-5xl">
-              Guide your child with <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">Primer</span>
+              Open Primer and <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">Learn</span>
             </h1>
             <p className="text-lg text-muted-foreground md:text-xl">
               Primer is an open-source companion that uses OpenAI&apos;s Realtime API to help your child explore ideas through warm,
-              conversational guidance—while you stay in complete control of the experience.
+              conversational guidance—while you stay in complete control of the experience. Give your child their own personalized learning experience without sharing your OpenAI account.
             </p>
             <div className="flex flex-col items-center gap-4 md:flex-row md:items-center">
               <Button size="lg" className="h-12 rounded-full px-8 text-base shadow-lg" onClick={onGetStarted}>
@@ -38,36 +38,36 @@ function LandingContent({ onGetStarted }: LandingContentProps) {
 
           <div className="rounded-3xl border border-border/40 bg-card/70 p-8 shadow-2xl backdrop-blur">
             <div className="space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
                   <Sparkles className="h-6 w-6" />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold">Why Primer?</h3>
                   <p className="text-sm text-muted-foreground">
-                    We believe AI should feel like a thoughtful mentor—not a toy. Primer focuses on curiosity, safety, and deep learning moments.
+                    We believe AI should feel like a thoughtful mentor—not a toy. Primer focuses on curiosity, safety, and deep learning moments. Built by a team that includes parents and trained developmental psychology specialists.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary/15 text-secondary">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary/15 text-secondary">
                   <ShieldCheck className="h-6 w-6" />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold">Private by design</h3>
                   <p className="text-sm text-muted-foreground">
-                    Keys stay in your browser. Primer exchanges them for short-lived credentials so conversations remain yours.
+                    Nobody will read your child&apos;s data. Keys stay in your browser, and conversations remain entirely yours. We don&apos;t have servers to store your data—we literally can&apos;t access it even if we wanted to.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/15 text-accent">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
                   <Rocket className="h-6 w-6" />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold">Made to iterate</h3>
                   <p className="text-sm text-muted-foreground">
-                    As an open-source project, you can audit every line, customize the prompt, and shape the future of your child&apos;s tutor.
+                    No VC funding. No salaries. Just full transparency through open source. You can audit every line, customize the prompt, and trust that we cannot leak your data even if we wanted to—there&apos;s nothing to leak.
                   </p>
                 </div>
               </div>
@@ -86,10 +86,10 @@ function LandingContent({ onGetStarted }: LandingContentProps) {
           </div>
           <div className="space-y-5">
             <h2 className="text-2xl font-semibold">Connect your OpenAI account</h2>
-            <ol className="space-y-4 text-sm text-muted-foreground">
-              <li className="flex gap-4">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">1</span>
-                <div>
+            <ol className="space-y-5 text-sm text-muted-foreground">
+              <li className="flex gap-5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">1</span>
+                <div className="pt-1">
                   Visit
                   {" "}
                   <a
@@ -103,13 +103,13 @@ function LandingContent({ onGetStarted }: LandingContentProps) {
                   and create a dedicated project for Primer.
                 </div>
               </li>
-              <li className="flex gap-4">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary/10 text-sm font-semibold text-secondary">2</span>
-                <div>Create a new API key scoped to Realtime access. Keep it separate from production workloads for easy rotation.</div>
+              <li className="flex gap-5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary/10 text-sm font-semibold text-secondary">2</span>
+                <div className="pt-1">Create a new API key scoped to Realtime access. Keep it separate from production workloads for easy rotation.</div>
               </li>
-              <li className="flex gap-4">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/10 text-sm font-semibold text-accent">3</span>
-                <div>Store the key in Primer&apos;s settings and keep a secure copy in your password manager for safe keeping.</div>
+              <li className="flex gap-5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 text-sm font-semibold text-accent">3</span>
+                <div className="pt-1">Store the key in Primer&apos;s settings and keep a secure copy in your password manager for safe keeping.</div>
               </li>
             </ol>
             <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/60 p-4 text-sm text-muted-foreground">
