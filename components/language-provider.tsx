@@ -23,11 +23,23 @@ const LanguageContext = createContext<LanguageContextValue | undefined>(undefine
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(defaultLocale)
+  const [timeZone, setTimeZone] = useState<string>("UTC")
 
   useEffect(() => {
     const storedLocale = localStorage.getItem("primer_language")
     if (isLocale(storedLocale)) {
       setLocaleState(storedLocale)
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      const resolved = Intl.DateTimeFormat().resolvedOptions().timeZone
+      if (resolved) {
+        setTimeZone(resolved)
+      }
+    } catch {
+      // ignore - keep default UTC fallback
     }
   }, [])
 
@@ -50,7 +62,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   return (
     <LanguageContext.Provider value={contextValue}>
-      <NextIntlClientProvider locale={locale} messages={localeMessages[locale]}>
+      <NextIntlClientProvider locale={locale} messages={localeMessages[locale]} timeZone={timeZone}>
         {children}
       </NextIntlClientProvider>
     </LanguageContext.Provider>

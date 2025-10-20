@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { useTranslations } from "next-intl"
 import { Info, Save } from "lucide-react"
 
@@ -133,7 +133,7 @@ export function SettingsPanel({ open, onOpenChange, onApiKeyChange }: SettingsPa
               <Info className="h-4 w-4" />
               <AlertDescription className="text-sm">
                 {t.rich("apiKey.hint", {
-                  link: (chunks) => (
+                  link: (chunks: ReactNode) => (
                     <a
                       href="https://platform.openai.com/api-keys"
                       target="_blank"
@@ -187,7 +187,7 @@ export function SettingsPanel({ open, onOpenChange, onApiKeyChange }: SettingsPa
             <Info className="h-4 w-4" />
             <AlertDescription className="text-sm">
               {t.rich("notes.content", {
-                strong: (chunks) => <strong>{chunks}</strong>,
+                strong: (chunks: ReactNode) => <strong>{chunks}</strong>,
               })}
             </AlertDescription>
           </Alert>
