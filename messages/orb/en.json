@@ -24,6 +24,7 @@
     "session": "Realtime session error. Please check the console for details."
   },
   "prompt": {
-    "languageInstruction": "Please respond in English."
+    "languageInstruction": "Please respond in English.",
+    "welcome": "Speak a short, encouraging welcome so the child knows you are ready to chat. Say something like: \"Hi there! I'm Primer, your learning buddy. What would you like to explore today?\""
   }
 }

@@ -24,6 +24,7 @@
     "session": "Błąd sesji Realtime. Sprawdź konsolę, aby poznać szczegóły."
   },
   "prompt": {
-    "languageInstruction": "Proszę odpowiadać po polsku."
+    "languageInstruction": "Proszę odpowiadać po polsku.",
+    "welcome": "Przywitaj się krótko i serdecznie, aby dziecko wiedziało, że jesteś gotowa do rozmowy. Powiedz coś w stylu: \"Cześć! Jestem Primer, Twoja towarzyszka nauki. O czym chcesz dziś porozmawiać?\""
   }
 }

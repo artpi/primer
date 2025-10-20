@@ -233,8 +233,12 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
                         handleStateChange("muted")
                         console.log("[Primer] Ready to chat!")
 
-			const welcomeInstructions =
-				"Speak a short, encouraging welcome so the child knows you are ready to chat. Say something like: \"Hi there! I'm Primer, your learning buddy. What would you like to explore today?\""
+                        const welcomeInstructions = [
+                                orbT("prompt.welcome"),
+                                languageInstruction,
+                        ]
+                                .filter(Boolean)
+                                .join("\n\n")
 
                         session.mute(true)
                         console.log("[Primer] Muted microphone for welcome message")
