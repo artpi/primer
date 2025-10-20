@@ -12,6 +12,7 @@ import { Info, Save } from "lucide-react"
 interface SettingsPanelProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onApiKeyChange?: (hasKey: boolean) => void
 }
 
 const DEFAULT_PROMPT = `You are Primer, a magical learning companion for children inspired by "The Young Lady's Illustrated Primer" from Neal Stephenson's Diamond Age. 
@@ -26,7 +27,7 @@ Your role is to:
 
 Always maintain a friendly, supportive tone and adapt your explanations to the child's level of understanding.`
 
-export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
+export function SettingsPanel({ open, onOpenChange, onApiKeyChange }: SettingsPanelProps) {
   const [apiKey, setApiKey] = useState("")
   const [systemPrompt, setSystemPrompt] = useState(DEFAULT_PROMPT)
   const [saved, setSaved] = useState(false)
@@ -38,13 +39,27 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
 
     if (savedApiKey) setApiKey(savedApiKey)
     if (savedPrompt) setSystemPrompt(savedPrompt)
-  }, [])
+
+    if (onApiKeyChange) {
+      onApiKeyChange(Boolean(savedApiKey))
+    }
+  }, [onApiKeyChange])
 
   const handleSave = () => {
-    localStorage.setItem("primer_api_key", apiKey)
+    const trimmedKey = apiKey.trim()
+
+    if (trimmedKey) {
+      localStorage.setItem("primer_api_key", trimmedKey)
+    } else {
+      localStorage.removeItem("primer_api_key")
+    }
     localStorage.setItem("primer_system_prompt", systemPrompt)
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
+
+    if (onApiKeyChange) {
+      onApiKeyChange(Boolean(trimmedKey))
+    }
   }
 
   const handleReset = () => {
