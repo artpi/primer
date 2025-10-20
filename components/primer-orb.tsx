@@ -1,12 +1,15 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useTranslations } from "next-intl"
+
 import { Button } from "@/components/ui/button"
 import { useRealtimeAgent } from "@/hooks/use-realtime-agent"
 
 type OrbState = "idle" | "muted" | "listening" | "thinking" | "speaking"
 
 export function PrimerOrb() {
+  const t = useTranslations("orb")
   const [orbState, setOrbState] = useState<OrbState>("idle")
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number | undefined>(undefined)
@@ -148,7 +151,7 @@ export function PrimerOrb() {
           onClick={handleOrbClick}
           disabled={isConnected}
           className="relative block rounded-full overflow-hidden shadow-2xl transition-transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-primary/50 disabled:cursor-default disabled:hover:scale-100"
-          aria-label={isConnected ? "Connected - speak to Primer" : "Connect to Primer"}
+          aria-label={isConnected ? t("aria.connected") : t("aria.connect")}
         >
           <canvas ref={canvasRef} width={300} height={300} className="w-[300px] h-[300px]" />
         </button>
@@ -156,12 +159,12 @@ export function PrimerOrb() {
         {/* State indicator */}
         <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-card/90 backdrop-blur-sm shadow-lg border">
           <p className="text-sm font-medium">
-            {!isConnected && "Click to start"}
-            {isConnected && orbState === "idle" && "Ready to chat"}
-            {isConnected && orbState === "muted" && "Getting ready..."}
-            {orbState === "listening" && "Listening..."}
-            {orbState === "thinking" && "Thinking..."}
-            {orbState === "speaking" && "Speaking..."}
+            {!isConnected && t("cta.start")}
+            {isConnected && orbState === "idle" && t("state.idle")}
+            {isConnected && orbState === "muted" && t("state.muted")}
+            {orbState === "listening" && t("state.listening")}
+            {orbState === "thinking" && t("state.thinking")}
+            {orbState === "speaking" && t("state.speaking")}
           </p>
         </div>
       </div>
@@ -174,19 +177,19 @@ export function PrimerOrb() {
             onClick={handleDisconnect}
             className="rounded-full shadow-lg bg-transparent"
           >
-            End Chat
+            {t("cta.endChat")}
           </Button>
         </div>
       )}
 
       {isConnected && orbState !== "muted" && (
         <p className="text-sm text-muted-foreground text-center max-w-md">
-          Just start speaking! Primer is listening and will respond automatically.
+          {t("cta.listeningHint")}
         </p>
       )}
       {isConnected && orbState === "muted" && (
         <p className="text-sm text-muted-foreground text-center max-w-md">
-          Primer is saying hello—your microphone will open in just a moment.
+          {t("cta.mutedHint")}
         </p>
       )}
     </div>

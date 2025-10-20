@@ -1,13 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
+import { Info, Save } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Info, Save } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Textarea } from "@/components/ui/textarea"
+import { useLanguage } from "@/components/language-provider"
+import { locales, type Locale, isLocale } from "@/lib/i18n/config"
 
 interface SettingsPanelProps {
   open: boolean
@@ -15,22 +19,21 @@ interface SettingsPanelProps {
   onApiKeyChange?: (hasKey: boolean) => void
 }
 
-const DEFAULT_PROMPT = `You are Primer, a magical learning companion for children inspired by "The Young Lady's Illustrated Primer" from Neal Stephenson's Diamond Age. 
-
-Your role is to:
-- Be warm, encouraging, and patient
-- Explain concepts in age-appropriate ways
-- Ask thoughtful questions to encourage curiosity
-- Celebrate learning and discovery
-- Keep conversations safe and educational
-- Use storytelling to make learning engaging
-
-Always maintain a friendly, supportive tone and adapt your explanations to the child's level of understanding.`
-
 export function SettingsPanel({ open, onOpenChange, onApiKeyChange }: SettingsPanelProps) {
+  const t = useTranslations("settings")
+  const { locale, setLocale } = useLanguage()
+  const defaultPrompt = t("prompt.default")
+
   const [apiKey, setApiKey] = useState("")
-  const [systemPrompt, setSystemPrompt] = useState(DEFAULT_PROMPT)
+  const [systemPrompt, setSystemPrompt] = useState(defaultPrompt)
   const [saved, setSaved] = useState(false)
+  const [autoDetectedLocale, setAutoDetectedLocale] = useState(false)
+
+  useEffect(() => {
+    if (!localStorage.getItem("primer_system_prompt")) {
+      setSystemPrompt(defaultPrompt)
+    }
+  }, [defaultPrompt])
 
   // Load settings from localStorage
   useEffect(() => {
@@ -44,6 +47,24 @@ export function SettingsPanel({ open, onOpenChange, onApiKeyChange }: SettingsPa
       onApiKeyChange(Boolean(savedApiKey))
     }
   }, [onApiKeyChange])
+
+  useEffect(() => {
+    if (!open || autoDetectedLocale) {
+      return
+    }
+
+    const storedLocale = localStorage.getItem("primer_language")
+    if (!storedLocale) {
+      const [preferred] = navigator.languages ?? [navigator.language]
+      const normalized = preferred?.split("-")[0]
+
+      if (isLocale(normalized) && normalized !== locale) {
+        setLocale(normalized)
+      }
+    }
+
+    setAutoDetectedLocale(true)
+  }, [autoDetectedLocale, locale, open, setLocale])
 
   const handleSave = () => {
     const trimmedKey = apiKey.trim()
@@ -63,22 +84,42 @@ export function SettingsPanel({ open, onOpenChange, onApiKeyChange }: SettingsPa
   }
 
   const handleReset = () => {
-    setSystemPrompt(DEFAULT_PROMPT)
+    setSystemPrompt(defaultPrompt)
   }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="text-2xl">Parent Settings</SheetTitle>
-          <SheetDescription>Configure Primer's behavior and connection settings</SheetDescription>
+          <SheetTitle className="text-2xl">{t("title")}</SheetTitle>
+          <SheetDescription>{t("description")}</SheetDescription>
         </SheetHeader>
 
         <div className="mt-8 space-y-6">
+          {/* Language Selection */}
+          <div className="space-y-3">
+            <Label htmlFor="language" className="text-base font-semibold">
+              {t("language.label")}
+            </Label>
+            <select
+              id="language"
+              value={locale}
+              onChange={(event) => setLocale(event.target.value as Locale)}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              {locales.map((code) => (
+                <option key={code} value={code}>
+                  {t(`language.options.${code}` as const)}
+                </option>
+              ))}
+            </select>
+            <p className="text-sm text-muted-foreground">{t("language.description")}</p>
+          </div>
+
           {/* API Key Section */}
           <div className="space-y-3">
             <Label htmlFor="api-key" className="text-base font-semibold">
-              OpenAI API Key
+              {t("apiKey.label")}
             </Label>
             <Input
               id="api-key"
@@ -91,17 +132,18 @@ export function SettingsPanel({ open, onOpenChange, onApiKeyChange }: SettingsPa
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription className="text-sm">
-                Your API key is stored locally in your browser and never sent to our servers. When you connect, it's
-                exchanged for a short-lived ephemeral key for secure WebRTC communication. Get your key from{" "}
-                <a
-                  href="https://platform.openai.com/api-keys"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-primary"
-                >
-                  OpenAI's platform
-                </a>
-                .
+                {t.rich("apiKey.hint", {
+                  link: (chunks) => (
+                    <a
+                      href="https://platform.openai.com/api-keys"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-primary"
+                    >
+                      {chunks}
+                    </a>
+                  ),
+                })}
               </AlertDescription>
             </Alert>
           </div>
@@ -110,10 +152,10 @@ export function SettingsPanel({ open, onOpenChange, onApiKeyChange }: SettingsPa
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label htmlFor="system-prompt" className="text-base font-semibold">
-                System Prompt
+                {t("prompt.label")}
               </Label>
               <Button variant="ghost" size="sm" onClick={handleReset} className="text-xs">
-                Reset to Default
+                {t("prompt.reset")}
               </Button>
             </div>
             <Textarea
@@ -124,7 +166,7 @@ export function SettingsPanel({ open, onOpenChange, onApiKeyChange }: SettingsPa
               className="font-mono text-sm resize-none"
             />
             <p className="text-sm text-muted-foreground">
-              Customize how Primer interacts with your child. This prompt guides the AI's personality and behavior.
+              {t("prompt.description")}
             </p>
           </div>
 
@@ -132,11 +174,11 @@ export function SettingsPanel({ open, onOpenChange, onApiKeyChange }: SettingsPa
           <div className="pt-4">
             <Button onClick={handleSave} className="w-full" size="lg">
               <Save className="mr-2 h-5 w-5" />
-              Save Settings
+              {t("actions.save")}
             </Button>
 
             {saved && (
-              <p className="mt-3 text-sm text-center text-primary font-medium">✓ Settings saved successfully!</p>
+              <p className="mt-3 text-sm text-center text-primary font-medium">{t("actions.saved")}</p>
             )}
           </div>
 
@@ -144,7 +186,9 @@ export function SettingsPanel({ open, onOpenChange, onApiKeyChange }: SettingsPa
           <Alert className="bg-muted/50">
             <Info className="h-4 w-4" />
             <AlertDescription className="text-sm">
-              <strong>Note:</strong> Changes take effect the next time you start a conversation with Primer.
+              {t.rich("notes.content", {
+                strong: (chunks) => <strong>{chunks}</strong>,
+              })}
             </AlertDescription>
           </Alert>
         </div>

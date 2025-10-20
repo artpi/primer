@@ -2,6 +2,8 @@ import type React from "react"
 import type { Metadata } from "next"
 import "./globals.css"
 
+import { LanguageProvider } from "@/components/language-provider"
+
 export const metadata: Metadata = {
   title: "Primer - Your Magical Learning Companion",
   description:
@@ -17,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        {children}
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   )

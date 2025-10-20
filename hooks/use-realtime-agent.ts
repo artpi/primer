@@ -1,9 +1,10 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useTranslations } from "next-intl"
+import { useCallback, useEffect, useRef, useState } from "react"
 
-import type { RealtimeSessionEventTypes } from "@openai/agents-realtime"
 import { RealtimeAgent, RealtimeSession } from "@openai/agents-realtime"
+
 
 type OrbState = "idle" | "muted" | "listening" | "thinking" | "speaking"
 
@@ -23,9 +24,11 @@ interface UseRealtimeAgentResult {
 }
 
 export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseRealtimeAgentResult {
-	const { onStateChange } = options
+        const { onStateChange } = options
 
-	const [isConnected, setIsConnected] = useState(false)
+        const orbT = useTranslations("orb")
+        const settingsT = useTranslations("settings")
+        const [isConnected, setIsConnected] = useState(false)
 	const [isConnecting, setIsConnecting] = useState(false)
 	const [currentState, setCurrentState] = useState<OrbState>("idle")
 	const [latestTranscript, setLatestTranscript] = useState("")
@@ -111,14 +114,14 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 				console.log("[Primer] Tool call ended", { tool: tool.name, result, details })
 			})
 
-			session.on("error", (event) => {
-				console.error("[Primer] Realtime session error:", event)
-				alert("Realtime session error. Please check the console for details.")
-				setIsConnected(false)
-				handleStateChange("idle")
-			})
+                        session.on("error", (event) => {
+                                console.error("[Primer] Realtime session error:", event)
+                                alert(orbT("errors.session"))
+                                setIsConnected(false)
+                                handleStateChange("idle")
+                        })
                 },
-                [handleStateChange, updateListeningState],
+                [handleStateChange, orbT, updateListeningState],
         )
 
 	const connect = useCallback(async () => {
@@ -126,16 +129,18 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 			return
 		}
 
-		// Read from localStorage only when connecting (client-side event handler)
-		const apiKey = localStorage.getItem("primer_api_key")
-		const systemPrompt =
-			localStorage.getItem("primer_system_prompt") ||
-			"You are Primer, a friendly and patient AI tutor for children. You explain things in simple, engaging ways and encourage curiosity and learning. You are kind, supportive, and always make learning fun."
+                // Read from localStorage only when connecting (client-side event handler)
+                const apiKey = localStorage.getItem("primer_api_key")
+                const storedPrompt = localStorage.getItem("primer_system_prompt")
+                const defaultPrompt = settingsT("prompt.default")
+                const basePrompt = storedPrompt && storedPrompt.trim().length > 0 ? storedPrompt : defaultPrompt
+                const languageInstruction = orbT("prompt.languageInstruction")
+                const instructions = [basePrompt.trim(), languageInstruction].filter(Boolean).join("\n\n")
 
-		if (!apiKey) {
-			alert("Please set your OpenAI API key in settings first!")
-			return
-		}
+                if (!apiKey) {
+                        alert(orbT("errors.apiKeyMissing"))
+                        return
+                }
 
 		setIsConnecting(true)
 
@@ -170,18 +175,18 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 
 			console.log("[Primer] Successfully obtained ephemeral key:", ephemeralKey.substring(0, 10) + "...")
 
-			const agent = new RealtimeAgent({
-				name: "Primer",
-				instructions: systemPrompt,
-				voice: "alloy",
-			})
+                        const agent = new RealtimeAgent({
+                                name: "Primer",
+                                instructions,
+                                voice: "alloy",
+                        })
 			agentRef.current = agent
 			console.log("[Primer] Created RealtimeAgent:", agent.name)
 
-			const sessionConfig = {
-				config: {
-					model: "gpt-realtime",
-					instructions: systemPrompt,
+                        const sessionConfig = {
+                                config: {
+                                        model: "gpt-realtime",
+                                        instructions,
 					toolChoice: "auto" as const,
 					tools: [],
 					audio: {
@@ -274,7 +279,7 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
                 finally {
                         setIsConnecting(false)
                 }
-        }, [handleStateChange, isConnected, isConnecting, registerSessionListeners])
+        }, [handleStateChange, isConnected, isConnecting, orbT, registerSessionListeners, settingsT])
 
 	const disconnect = useCallback(() => {
 		console.log("[Primer] Disconnecting...")

@@ -1,0 +1,30 @@
+{
+  "openButton": "Settings",
+  "title": "Parent Settings",
+  "description": "Configure Primer's behavior and connection settings",
+  "language": {
+    "label": "Language",
+    "description": "Choose how Primer and the interface speak. This also updates the system prompt automatically.",
+    "options": {
+      "en": "English",
+      "pl": "Polski"
+    }
+  },
+  "apiKey": {
+    "label": "OpenAI API Key",
+    "hint": "Your API key is stored locally in your browser and never sent to our servers. When you connect, it's exchanged for a short-lived ephemeral key for secure WebRTC communication. Get your key from <link>OpenAI's platform</link>."
+  },
+  "prompt": {
+    "label": "System Prompt",
+    "reset": "Reset to Default",
+    "description": "Customize how Primer interacts with your child. This prompt guides the AI's personality and behavior.",
+    "default": "You are Primer, a magical learning companion for children inspired by \"The Young Lady's Illustrated Primer\" from Neal Stephenson's Diamond Age.\n\nYour role is to:\n- Be warm, encouraging, and patient\n- Explain concepts in age-appropriate ways\n- Ask thoughtful questions to encourage curiosity\n- Celebrate learning and discovery\n- Keep conversations safe and educational\n- Use storytelling to make learning engaging\n\nAlways maintain a friendly, supportive tone and adapt your explanations to the child's level of understanding."
+  },
+  "actions": {
+    "save": "Save Settings",
+    "saved": "\u2713 Settings saved successfully!"
+  },
+  "notes": {
+    "content": "<strong>Note:</strong> Changes take effect the next time you start a conversation with Primer."
+  }
+}

@@ -1,16 +1,24 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
+import { KeyRound, Rocket, Settings, ShieldCheck, Sparkles } from "lucide-react"
+
 import { PrimerOrb } from "@/components/primer-orb"
 import { SettingsPanel } from "@/components/settings-panel"
 import { Button } from "@/components/ui/button"
-import { KeyRound, Rocket, Settings, ShieldCheck, Sparkles } from "lucide-react"
 
 interface LandingContentProps {
   onGetStarted: () => void
 }
 
 function LandingContent({ onGetStarted }: LandingContentProps) {
+  const howItems = [
+    "Create nightly storytime adventures personalized to your child's interests.",
+    "Review homework concepts in plain language and encourage curiosity with follow-up questions.",
+    "Spark deeper conversations about science, art, and big feelings in a calm, supportive tone.",
+  ]
+
   return (
     <div className="relative z-10 flex min-h-screen w-full flex-col justify-center px-6 py-16">
       <div className="mx-auto max-w-6xl space-y-16">
@@ -20,18 +28,23 @@ function LandingContent({ onGetStarted }: LandingContentProps) {
               Open source · Realtime AI · Built for families
             </span>
             <h1 className="text-4xl font-semibold leading-tight text-foreground md:text-5xl">
-              Open Primer and <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">Learn</span>
+              Open Primer and
+              <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                {" "}
+                Learn
+              </span>
             </h1>
             <p className="text-lg text-muted-foreground md:text-xl">
-              Primer is an open-source companion that uses OpenAI&apos;s Realtime API to help your child explore ideas through warm,
-              conversational guidance—while you stay in complete control of the experience. Give your child their own personalized learning experience without sharing your OpenAI account.
+              Primer is an open-source companion that uses OpenAI's Realtime API to help your child explore ideas through warm,
+              conversational guidance—while you stay in complete control of the experience. Give your child their own
+              personalized learning experience without sharing your OpenAI account.
             </p>
             <div className="flex flex-col items-center gap-4 md:flex-row md:items-center">
               <Button size="lg" className="h-12 rounded-full px-8 text-base shadow-lg" onClick={onGetStarted}>
                 Begin setup
               </Button>
               <p className="text-sm text-muted-foreground md:text-left">
-                Set your family&apos;s OpenAI key to unlock the orb experience and personalize Primer&apos;s voice and tone.
+                Set your family's OpenAI key to unlock the orb experience and personalize Primer's voice and tone.
               </p>
             </div>
           </div>
@@ -45,7 +58,8 @@ function LandingContent({ onGetStarted }: LandingContentProps) {
                 <div>
                   <h3 className="text-xl font-semibold">Why Primer?</h3>
                   <p className="text-sm text-muted-foreground">
-                    We believe AI should feel like a thoughtful mentor—not a toy. Primer focuses on curiosity, safety, and deep learning moments. Built by a team that includes parents and trained developmental psychology specialists.
+                    We believe AI should feel like a thoughtful mentor—not a toy. Primer focuses on curiosity, safety, and deep
+                    learning moments. Built by a team that includes parents and trained developmental psychology specialists.
                   </p>
                 </div>
               </div>
@@ -56,7 +70,8 @@ function LandingContent({ onGetStarted }: LandingContentProps) {
                 <div>
                   <h3 className="text-xl font-semibold">Private by design</h3>
                   <p className="text-sm text-muted-foreground">
-                    Nobody will read your child&apos;s data. Keys stay in your browser, and conversations remain entirely yours. We don&apos;t have servers to store your data—we literally can&apos;t access it even if we wanted to.
+                    Nobody will read your child's data. Keys stay in your browser, and conversations remain entirely yours. We
+                    don't have servers to store your data—we literally can't access it even if we wanted to.
                   </p>
                 </div>
               </div>
@@ -67,7 +82,8 @@ function LandingContent({ onGetStarted }: LandingContentProps) {
                 <div>
                   <h3 className="text-xl font-semibold">Made to iterate</h3>
                   <p className="text-sm text-muted-foreground">
-                    No VC funding. No salaries. Just full transparency through open source. You can audit every line, customize the prompt, and trust that we cannot leak your data even if we wanted to—there&apos;s nothing to leak.
+                    No VC funding. No salaries. Just full transparency through open source. You can audit every line, customize
+                    the prompt, and trust that we cannot leak your data even if we wanted to—there's nothing to leak.
                   </p>
                 </div>
               </div>
@@ -79,9 +95,11 @@ function LandingContent({ onGetStarted }: LandingContentProps) {
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold">How families use Primer</h2>
             <ul className="space-y-3 text-sm text-muted-foreground">
-              <li className="rounded-2xl border border-border/60 bg-background/60 p-4">Create nightly storytime adventures personalized to your child&apos;s interests.</li>
-              <li className="rounded-2xl border border-border/60 bg-background/60 p-4">Review homework concepts in plain language and encourage curiosity with follow-up questions.</li>
-              <li className="rounded-2xl border border-border/60 bg-background/60 p-4">Spark deeper conversations about science, art, and big feelings in a calm, supportive tone.</li>
+              {howItems.map((item) => (
+                <li key={item} className="rounded-2xl border border-border/60 bg-background/60 p-4">
+                  {item}
+                </li>
+              ))}
             </ul>
           </div>
           <div className="space-y-5">
@@ -98,7 +116,7 @@ function LandingContent({ onGetStarted }: LandingContentProps) {
                     rel="noopener noreferrer"
                     className="font-medium text-foreground underline decoration-primary/60 decoration-2 underline-offset-4"
                   >
-                    OpenAI&apos;s dashboard
+                    OpenAI's dashboard
                   </a>{" "}
                   and create a dedicated project for Primer.
                 </div>
@@ -109,7 +127,7 @@ function LandingContent({ onGetStarted }: LandingContentProps) {
               </li>
               <li className="flex gap-5">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 text-sm font-semibold text-accent">3</span>
-                <div className="pt-1">Store the key in Primer&apos;s settings and keep a secure copy in your password manager for safe keeping.</div>
+                <div className="pt-1">Store the key in Primer's settings and keep a secure copy in your password manager for safe keeping.</div>
               </li>
             </ol>
             <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/60 p-4 text-sm text-muted-foreground">
@@ -124,6 +142,8 @@ function LandingContent({ onGetStarted }: LandingContentProps) {
 }
 
 export default function PrimerPage() {
+  const orb = useTranslations("orb")
+  const settings = useTranslations("settings")
   const [showSettings, setShowSettings] = useState(false)
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null)
 
@@ -190,7 +210,7 @@ export default function PrimerPage() {
           className="rounded-full shadow-lg bg-card/80 backdrop-blur-sm hover:bg-card"
         >
           <Settings className="h-5 w-5" />
-          <span className="sr-only">Settings</span>
+          <span className="sr-only">{settings("openButton")}</span>
         </Button>
       </div>
 
@@ -203,19 +223,19 @@ export default function PrimerPage() {
                 Primer
               </h1>
               <p className="mx-auto max-w-md text-balance text-lg md:text-xl text-muted-foreground">
-                Your magical learning companion
+                {orb("tagline")}
               </p>
             </div>
 
             <PrimerOrb />
 
             <div className="mt-12 max-w-sm text-center text-sm text-muted-foreground">
-              <p className="text-balance">Tap the orb to start a conversation with Primer</p>
+              <p className="text-balance">{orb("hint")}</p>
             </div>
           </div>
         ) : hasApiKey === null ? (
           <div className="flex flex-1 items-center justify-center">
-            <p className="text-sm text-muted-foreground">Loading your settings…</p>
+            <p className="text-sm text-muted-foreground">{orb("loading")}</p>
           </div>
         ) : (
           <LandingContent onGetStarted={handleGetStarted} />
