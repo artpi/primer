@@ -1,0 +1,30 @@
+{
+  "tagline": "Twoja magiczna towarzyszka nauki",
+  "hint": "Dotknij kuli, aby rozpocząć rozmowę z Primer",
+  "loading": "Wczytywanie ustawień…",
+  "cta": {
+    "start": "Kliknij, aby rozpocząć",
+    "endChat": "Zakończ rozmowę",
+    "listeningHint": "Po prostu zacznij mówić! Primer słucha i odpowie automatycznie.",
+    "mutedHint": "Primer wita się — mikrofon włączy się za chwilę."
+  },
+  "state": {
+    "idle": "Gotowa do rozmowy",
+    "muted": "Przygotowuję się...",
+    "listening": "Słucham...",
+    "thinking": "Myślę...",
+    "speaking": "Mówię..."
+  },
+  "aria": {
+    "connect": "Połącz z Primer",
+    "connected": "Połączono — mów do Primer"
+  },
+  "errors": {
+    "apiKeyMissing": "Najpierw ustaw swój klucz API OpenAI w ustawieniach!",
+    "session": "Błąd sesji Realtime. Sprawdź konsolę, aby poznać szczegóły."
+  },
+  "prompt": {
+    "languageInstruction": "Proszę odpowiadać po polsku.",
+    "welcome": "Przywitaj się krótko i serdecznie, aby dziecko wiedziało, że jesteś gotowa do rozmowy. Powiedz coś w stylu: \"Cześć! Jestem Primer, Twoja towarzyszka nauki. O czym chcesz dziś porozmawiać?\""
+  }
+}

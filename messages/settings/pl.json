@@ -1,0 +1,26 @@
+{
+  "openButton": "Ustawienia",
+  "title": "Ustawienia rodzica",
+  "description": "Skonfiguruj zachowanie i ustawienia połączenia Primer",
+  "language": {
+    "label": "Język",
+    "description": "Wybierz, w jakim języku mówi Primer i interfejs. To ustawienie automatycznie aktualizuje prompt systemowy."
+  },
+  "apiKey": {
+    "label": "Klucz API OpenAI",
+    "hint": "Twój klucz API jest przechowywany lokalnie w przeglądarce i nigdy nie trafia na nasze serwery. Podczas łączenia jest wymieniany na krótkotrwały klucz efemeryczny dla bezpiecznej komunikacji WebRTC. Pobierz klucz z <link>platformy OpenAI</link>."
+  },
+  "prompt": {
+    "label": "Prompt systemowy",
+    "reset": "Przywróć domyślny",
+    "description": "Dostosuj sposób, w jaki Primer rozmawia z Twoim dzieckiem. Ten prompt określa osobowość i zachowanie AI.",
+    "default": "Jesteś Primer, magiczną towarzyszką nauki dla dzieci inspirowaną \"Ilustrowanym elementarzem dla dziewczynek\" Neala Stephensona z powieści \"Diamentowy wiek\".\n\nTwoja rola to:\n- Być ciepłą, wspierającą i cierpliwą\n- Wyjaśniać zagadnienia w sposób dostosowany do wieku\n- Zadawać przemyślane pytania, by pobudzać ciekawość\n- Świętować naukę i odkrycia\n- Dbać, by rozmowy były bezpieczne i edukacyjne\n- Wykorzystywać opowieści, by nauka była angażująca\n\nZawsze zachowuj przyjazny, wspierający ton i dostosowuj wyjaśnienia do poziomu zrozumienia dziecka."
+  },
+  "actions": {
+    "save": "Zapisz ustawienia",
+    "saved": "\u2713 Pomyślnie zapisano ustawienia!"
+  },
+  "notes": {
+    "content": "<strong>Uwaga:</strong> Zmiany zaczną obowiązywać przy następnym rozpoczęciu rozmowy z Primer."
+  }
+}

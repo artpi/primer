@@ -1,0 +1,30 @@
+{
+  "tagline": "Your magical learning companion",
+  "hint": "Tap the orb to start a conversation with Primer",
+  "loading": "Loading your settings…",
+  "cta": {
+    "start": "Click to start",
+    "endChat": "End Chat",
+    "listeningHint": "Just start speaking! Primer is listening and will respond automatically.",
+    "mutedHint": "Primer is saying hello—your microphone will open in just a moment."
+  },
+  "state": {
+    "idle": "Ready to chat",
+    "muted": "Getting ready...",
+    "listening": "Listening...",
+    "thinking": "Thinking...",
+    "speaking": "Speaking..."
+  },
+  "aria": {
+    "connect": "Connect to Primer",
+    "connected": "Connected - speak to Primer"
+  },
+  "errors": {
+    "apiKeyMissing": "Please set your OpenAI API key in settings first!",
+    "session": "Realtime session error. Please check the console for details."
+  },
+  "prompt": {
+    "languageInstruction": "Please respond in English.",
+    "welcome": "Speak a short, encouraging welcome so the child knows you are ready to chat. Say something like: \"Hi there! I'm Primer, your learning buddy. What would you like to explore today?\""
+  }
+}

@@ -101,6 +101,7 @@ Since Primer is a privacy-focused, standalone application, success cannot be mea
 ### 9.1. Phases
    - **Phase 1 (MVP)**:
      - Key deliverables: A simple UI with a button to trigger voice chat, integration with OpenAI's APIs, and a settings panel to store the API key and a custom system prompt in `localStorage`.
+     - Localization note: Only the orb experience and settings panel are translated; the public landing page remains English-only for the initial release.
    - **Future Phases (Community Driven)**:
      - Key deliverables: Image generation features, development of guided "curriculums," and integrations with other external data sources. The settings could be enhanced to be stored and managed via import/export or linked to a user's OpenAI account resources (e.g., Assistants).
 
