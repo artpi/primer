@@ -1,4 +1,5 @@
 import type React from "react"
+import Script from "next/script"
 import type { Metadata } from "next"
 import "./globals.css"
 
@@ -16,6 +17,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <Script
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon='{"token": "9cc98ed71ee24b8a96d3f64577057235"}'
+          strategy="afterInteractive"
+        />
+      </head>
       <body className="font-sans antialiased">
         {children}
       </body>
