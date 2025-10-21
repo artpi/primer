@@ -146,6 +146,7 @@ export default function PrimerPage() {
   const settings = useTranslations("settings")
   const [showSettings, setShowSettings] = useState(false)
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null)
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null)
 
   useEffect(() => {
     const storedKey = localStorage.getItem("primer_api_key")
@@ -174,11 +175,17 @@ export default function PrimerPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
+      {/* AI generated background */}
+      <div
+        className={`fixed inset-0 -z-20 bg-cover bg-center bg-no-repeat transition-opacity duration-700 pointer-events-none ${backgroundImage ? "opacity-100" : "opacity-0"}`}
+        style={{ backgroundImage: backgroundImage ? `url(${backgroundImage})` : "none" }}
+      />
+
       {/* Magical gradient background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5" />
+      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5" />
 
       {/* Decorative sparkles */}
-      <div className="fixed inset-0 pointer-events-none">
+      <div className="fixed inset-0 pointer-events-none z-0">
         <div
           className="absolute top-[10%] left-[15%] w-2 h-2 bg-accent rounded-full sparkle"
           style={{ animationDelay: "0s" }}
@@ -227,7 +234,7 @@ export default function PrimerPage() {
               </p>
             </div>
 
-            <PrimerOrb />
+            <PrimerOrb onBackgroundImageChange={setBackgroundImage} />
 
             <div className="mt-12 max-w-sm text-center text-sm text-muted-foreground">
               <p className="text-balance">{orb("hint")}</p>

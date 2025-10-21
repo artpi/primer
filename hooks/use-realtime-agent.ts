@@ -3,13 +3,34 @@
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import { RealtimeAgent, RealtimeSession } from "@openai/agents-realtime"
+import {
+        RealtimeAgent,
+        RealtimeSession,
+        type TransportToolCallEvent,
+} from "@openai/agents-realtime"
+
+import { BACKGROUND_IMAGE_TOOL_DEFINITION, runBackgroundImageTool } from "./tools/background-image"
 
 
 type OrbState = "idle" | "muted" | "listening" | "thinking" | "speaking"
 
+const isFunctionToolCallEvent = (toolCall: unknown): toolCall is TransportToolCallEvent => {
+        if (typeof toolCall !== "object" || toolCall === null) {
+                return false
+        }
+
+        const candidate = toolCall as Partial<TransportToolCallEvent>
+        return (
+                candidate.type === "function_call" &&
+                typeof candidate.name === "string" &&
+                typeof candidate.arguments === "string" &&
+                typeof candidate.callId === "string"
+        )
+}
+
 interface UseRealtimeAgentOptions {
-	onStateChange?: (state: OrbState) => void
+        onStateChange?: (state: OrbState) => void
+        onBackgroundImageChange?: (imageUrl: string | null) => void
 }
 
 interface UseRealtimeAgentResult {
@@ -24,7 +45,7 @@ interface UseRealtimeAgentResult {
 }
 
 export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseRealtimeAgentResult {
-        const { onStateChange } = options
+        const { onStateChange, onBackgroundImageChange } = options
 
         const orbT = useTranslations("orb")
         const settingsT = useTranslations("settings")
@@ -61,9 +82,26 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
                 handleStateChange(initialMuteActiveRef.current ? "muted" : "listening")
         }, [handleStateChange])
 
+        const handleBackgroundImageToolCall = useCallback(
+                async (toolCall: TransportToolCallEvent) => {
+                        const session = sessionRef.current
+                        if (!session) {
+                                return
+                        }
+
+                        await runBackgroundImageTool({
+                                session,
+                                toolCall,
+                                translate: orbT,
+                                onBackgroundImageChange,
+                        })
+                },
+                [onBackgroundImageChange, orbT],
+        )
+
         const registerSessionListeners = useCallback(
-		(session: RealtimeSession) => {
-			// Log all transport events for debugging
+                (session: RealtimeSession) => {
+                        // Log all transport events for debugging
                         session.on("transport_event", (event) => {
                                 console.log("[Primer] Transport event:", event.type, event)
 
@@ -106,9 +144,17 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 				console.log("[Primer] History item added:", item)
 			})
 
-			session.on("agent_tool_start", (context, agent, tool, details) => {
-				console.log("[Primer] Tool call started", { tool: tool.name, details })
-			})
+                        session.on("agent_tool_start", (context, agent, tool, details) => {
+                                console.log("[Primer] Tool call started", { tool: tool.name, details })
+
+                                const toolCall = details?.toolCall
+                                if (
+                                        tool.name === BACKGROUND_IMAGE_TOOL_DEFINITION.name &&
+                                        isFunctionToolCallEvent(toolCall)
+                                ) {
+                                        void handleBackgroundImageToolCall(toolCall)
+                                }
+                        })
 
 			session.on("agent_tool_end", (context, agent, tool, result, details) => {
 				console.log("[Primer] Tool call ended", { tool: tool.name, result, details })
@@ -119,9 +165,10 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
                                 alert(orbT("errors.session"))
                                 setIsConnected(false)
                                 handleStateChange("idle")
+                                onBackgroundImageChange?.(null)
                         })
                 },
-                [handleStateChange, orbT, updateListeningState],
+                [handleBackgroundImageToolCall, handleStateChange, onBackgroundImageChange, orbT, updateListeningState],
         )
 
 	const connect = useCallback(async () => {
@@ -187,8 +234,8 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
                                 config: {
                                         model: "gpt-realtime",
                                         instructions,
-					toolChoice: "auto" as const,
-					tools: [],
+                                        toolChoice: "auto" as const,
+                                        tools: [BACKGROUND_IMAGE_TOOL_DEFINITION],
 					audio: {
 						input: {
 							turnDetection: {
@@ -285,12 +332,12 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
                 }
         }, [handleStateChange, isConnected, isConnecting, orbT, registerSessionListeners, settingsT])
 
-	const disconnect = useCallback(() => {
-		console.log("[Primer] Disconnecting...")
-		if (sessionRef.current) {
-			sessionRef.current.close()
-			sessionRef.current = undefined
-			console.log("[Primer] Session closed")
+        const disconnect = useCallback(() => {
+                console.log("[Primer] Disconnecting...")
+                if (sessionRef.current) {
+                        sessionRef.current.close()
+                        sessionRef.current = undefined
+                        console.log("[Primer] Session closed")
 		}
 		if (audioElementRef.current) {
 			audioElementRef.current.pause()
@@ -308,8 +355,9 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
                 setLatestResponse("")
                 setLatestTranscript("")
                 handleStateChange("idle")
+                onBackgroundImageChange?.(null)
                 console.log("[Primer] Disconnected successfully")
-        }, [handleStateChange])
+        }, [handleStateChange, onBackgroundImageChange])
 
         const interrupt = useCallback(() => {
                 console.log("[Primer] Interrupting current response...")
