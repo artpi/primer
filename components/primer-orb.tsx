@@ -8,16 +8,19 @@ import { useRealtimeAgent } from "@/hooks/use-realtime-agent"
 
 type OrbState = "idle" | "muted" | "listening" | "thinking" | "speaking"
 
-export function PrimerOrb() {
+interface PrimerOrbProps {
+  onBackgroundImageChange?: (imageUrl: string | null) => void
+}
+
+export function PrimerOrb({ onBackgroundImageChange }: PrimerOrbProps) {
   const t = useTranslations("orb")
   const [orbState, setOrbState] = useState<OrbState>("idle")
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number | undefined>(undefined)
 
   const { isConnected, connect, disconnect } = useRealtimeAgent({
-    onStateChange: (state) => {
-      setOrbState(state)
-    },
+    onStateChange: setOrbState,
+    onBackgroundImageChange,
   })
 
   // Orb animation
