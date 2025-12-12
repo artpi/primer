@@ -3,10 +3,10 @@ import type { RealtimeSession, TransportToolCallEvent } from "@openai/agents-rea
 const BACKGROUND_IMAGE_TOOL_NAME = "generate_background_image" as const
 
 export const BACKGROUND_IMAGE_TOOL_DEFINITION = {
-        type: "function" as const,
-        name: BACKGROUND_IMAGE_TOOL_NAME,
-        description:
-                "Generate a gentle, storybook-like background illustration for the Primer interface using gpt-image-1. Use this when a learner asks for a new scene or when you want to refresh the ambience.",
+	type: "function" as const,
+	name: BACKGROUND_IMAGE_TOOL_NAME,
+	description:
+		"Generate an image using DALL-E/gpt-image-1. ALWAYS use this tool when the user asks you to generate, create, draw, make, or show them an image, picture, illustration, or drawing of anything. The generated image will be displayed as the background of the interface. You CAN generate images - use this tool to do so!",
         parameters: {
                 type: "object" as const,
                 properties: {
@@ -24,6 +24,8 @@ export const BACKGROUND_IMAGE_TOOL_DEFINITION = {
                 required: ["prompt"],
                 additionalProperties: false,
         },
+        // Note: required by @openai/agents-realtime tool definition types, but NOT accepted by
+        // the Realtime GA HTTP API when included in `session.tools`. Strip it before sending.
         strict: false,
 }
 
@@ -38,11 +40,32 @@ interface BackgroundImageToolOptions {
         onBackgroundImageChange?: (imageUrl: string | null) => void
 }
 
+export type BackgroundImageToolArgs = {
+        prompt: string
+        style?: string
+}
+
+export type BackgroundImageToolResult =
+        | {
+                        status: "success"
+                        size: ViewportSizing["size"]
+                        orientation: ViewportSizing["orientation"]
+                        aspectRatio: number
+                        promptUsed: string
+                        imageUrl: string
+          }
+        | {
+                        status: "error"
+                        message: string
+          }
+
 interface ViewportSizing {
         width: number
         height: number
         ratio: number
-        size: "1792x1024" | "1024x1792" | "1024x1024"
+        // Supported by the Images API (gpt-image-1) as of GA:
+        // "1024x1024", "1024x1536", "1536x1024", "auto"
+        size: "1536x1024" | "1024x1536" | "1024x1024"
         orientation: "landscape" | "portrait" | "square"
 }
 
@@ -66,7 +89,7 @@ const computeViewportSizing = (): ViewportSizing => {
                         width,
                         height,
                         ratio,
-                        size: "1792x1024",
+                        size: "1536x1024",
                         orientation: "landscape",
                 }
         }
@@ -76,7 +99,7 @@ const computeViewportSizing = (): ViewportSizing => {
                         width,
                         height,
                         ratio,
-                        size: "1024x1792",
+                        size: "1024x1536",
                         orientation: "portrait",
                 }
         }
@@ -138,30 +161,25 @@ const buildPrompt = (
         return promptSections.join("\n\n")
 }
 
-export const runBackgroundImageTool = async ({
-        session,
-        toolCall,
+export const generateBackgroundImage = async ({
         translate,
+        args,
         onBackgroundImageChange,
-}: BackgroundImageToolOptions): Promise<void> => {
+}: {
+        translate: Translator
+        args: Record<string, unknown>
+        onBackgroundImageChange?: (imageUrl: string | null) => void
+}): Promise<BackgroundImageToolResult> => {
         const apiKey = localStorage.getItem("primer_api_key")
         if (!apiKey) {
                 const message = translate("errors.apiKeyMissing")
                 alert(message)
-                session.transport.sendFunctionCallOutput(
-                        toolCall,
-                        JSON.stringify({
-                                status: "error",
-                                message: "Missing API key",
-                        }),
-                        true,
-                )
-                return
+                onBackgroundImageChange?.(null)
+                return { status: "error", message: "Missing API key" }
         }
 
-        const parsedArguments = parseToolArguments(toolCall.arguments)
         const viewport = computeViewportSizing()
-        const finalPrompt = buildPrompt(translate, parsedArguments, viewport)
+        const finalPrompt = buildPrompt(translate, args, viewport)
 
         try {
                 console.log("[Primer] Generating background image with gpt-image-1", {
@@ -181,7 +199,6 @@ export const runBackgroundImageTool = async ({
                                 model: "gpt-image-1",
                                 prompt: finalPrompt,
                                 size: viewport.size,
-                                response_format: "b64_json",
                         }),
                 })
 
@@ -191,26 +208,32 @@ export const runBackgroundImageTool = async ({
                 }
 
                 const imageJson = await imageResponse.json()
-                const base64Image = imageJson?.data?.[0]?.b64_json as string | undefined
+                const firstImage = imageJson?.data?.[0] as
+                        | { b64_json?: string; b64?: string; base64?: string; url?: string }
+                        | undefined
+                const base64Image = firstImage?.b64_json ?? firstImage?.b64 ?? firstImage?.base64
+                const urlImage = firstImage?.url
 
-                if (!base64Image) {
+                const imageUrl =
+                        typeof base64Image === "string" && base64Image.length > 0
+                                ? `data:image/png;base64,${base64Image}`
+                                : typeof urlImage === "string" && urlImage.length > 0
+                                        ? urlImage
+                                        : null
+
+                if (!imageUrl) {
                         throw new Error("Image generation response did not include image data")
                 }
-
-                const imageUrl = `data:image/png;base64,${base64Image}`
                 onBackgroundImageChange?.(imageUrl)
 
-                session.transport.sendFunctionCallOutput(
-                        toolCall,
-                        JSON.stringify({
-                                status: "success",
-                                size: viewport.size,
-                                orientation: viewport.orientation,
-                                aspectRatio: Number(viewport.ratio.toFixed(2)),
-                                promptUsed: finalPrompt,
-                        }),
-                        true,
-                )
+                return {
+                        status: "success",
+                        imageUrl,
+                        size: viewport.size,
+                        orientation: viewport.orientation,
+                        aspectRatio: Number(viewport.ratio.toFixed(2)),
+                        promptUsed: finalPrompt,
+                }
         }
         catch (error) {
                 console.error("[Primer] Failed to generate background image", error)
@@ -219,16 +242,31 @@ export const runBackgroundImageTool = async ({
                         error instanceof Error
                                 ? error.message
                                 : "Unknown error while generating background image"
-
-                session.transport.sendFunctionCallOutput(
-                        toolCall,
-                        JSON.stringify({
-                                status: "error",
-                                message,
-                        }),
-                        true,
-                )
+                return { status: "error", message }
         }
+}
+
+export const runBackgroundImageTool = async ({
+        session,
+        toolCall,
+        translate,
+        onBackgroundImageChange,
+}: BackgroundImageToolOptions): Promise<void> => {
+        const parsedArguments = parseToolArguments(toolCall.arguments)
+        const result = await generateBackgroundImage({
+                translate,
+                args: parsedArguments,
+                onBackgroundImageChange,
+        })
+
+        // Avoid sending giant base64 payloads back into the conversation.
+        if (result.status === "success") {
+                const { imageUrl: _imageUrl, ...rest } = result
+                session.transport.sendFunctionCallOutput(toolCall, JSON.stringify(rest), true)
+                return
+        }
+
+        session.transport.sendFunctionCallOutput(toolCall, JSON.stringify(result), true)
 }
 
 export const BACKGROUND_IMAGE_TOOL = {

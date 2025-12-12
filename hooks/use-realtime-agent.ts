@@ -6,27 +6,13 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import {
         RealtimeAgent,
         RealtimeSession,
-        type TransportToolCallEvent,
+        tool,
 } from "@openai/agents-realtime"
 
-import { BACKGROUND_IMAGE_TOOL_DEFINITION, runBackgroundImageTool } from "./tools/background-image"
+import { BACKGROUND_IMAGE_TOOL_DEFINITION, generateBackgroundImage } from "./tools/background-image"
 
 
 type OrbState = "idle" | "muted" | "listening" | "thinking" | "speaking"
-
-const isFunctionToolCallEvent = (toolCall: unknown): toolCall is TransportToolCallEvent => {
-        if (typeof toolCall !== "object" || toolCall === null) {
-                return false
-        }
-
-        const candidate = toolCall as Partial<TransportToolCallEvent>
-        return (
-                candidate.type === "function_call" &&
-                typeof candidate.name === "string" &&
-                typeof candidate.arguments === "string" &&
-                typeof candidate.callId === "string"
-        )
-}
 
 interface UseRealtimeAgentOptions {
         onStateChange?: (state: OrbState) => void
@@ -82,34 +68,23 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
                 handleStateChange(initialMuteActiveRef.current ? "muted" : "listening")
         }, [handleStateChange])
 
-        const handleBackgroundImageToolCall = useCallback(
-                async (toolCall: TransportToolCallEvent) => {
-                        const session = sessionRef.current
-                        if (!session) {
-                                return
-                        }
-
-                        await runBackgroundImageTool({
-                                session,
-                                toolCall,
-                                translate: orbT,
-                                onBackgroundImageChange,
-                        })
-                },
-                [onBackgroundImageChange, orbT],
-        )
-
         const registerSessionListeners = useCallback(
                 (session: RealtimeSession) => {
-                        // Log all transport events for debugging
-                        session.on("transport_event", (event) => {
-                                console.log("[Primer] Transport event:", event.type, event)
+			// Log all transport events for debugging
+			session.on("transport_event", (event) => {
+				console.log("[Primer] Transport event:", event.type, event)
 
-                                if (event.type === "connection_change") {
-                                        console.log("[Primer] Connection status changed")
-                                        updateListeningState()
-                                }
-                        })
+				if (event.type === "connection_change") {
+					console.log("[Primer] Connection status changed")
+					updateListeningState()
+				}
+
+				// Log session configuration to see registered tools
+				if (event.type === "session.created" || event.type === "session.updated") {
+					const sessionEvent = event as { session?: { tools?: unknown[] } }
+					console.log("[Primer] Session tools from server:", sessionEvent.session?.tools)
+				}
+			})
 
 			session.on("agent_start", (context, agent) => {
 				console.log("[Primer] Agent started responding", { agent: agent.name, context })
@@ -146,14 +121,6 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 
                         session.on("agent_tool_start", (context, agent, tool, details) => {
                                 console.log("[Primer] Tool call started", { tool: tool.name, details })
-
-                                const toolCall = details?.toolCall
-                                if (
-                                        tool.name === BACKGROUND_IMAGE_TOOL_DEFINITION.name &&
-                                        isFunctionToolCallEvent(toolCall)
-                                ) {
-                                        void handleBackgroundImageToolCall(toolCall)
-                                }
                         })
 
 			session.on("agent_tool_end", (context, agent, tool, result, details) => {
@@ -161,14 +128,19 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 			})
 
                         session.on("error", (event) => {
+                                const errorEvent = event as { error?: { message?: string; code?: string; param?: string } }
                                 console.error("[Primer] Realtime session error:", event)
-                                alert(orbT("errors.session"))
-                                setIsConnected(false)
-                                handleStateChange("idle")
-                                onBackgroundImageChange?.(null)
+                                console.error("[Primer] Error details:", errorEvent.error?.message, errorEvent.error?.code, errorEvent.error?.param)
+                                // Don't alert on non-fatal errors (like session.update format issues during setup)
+                                if (errorEvent.error?.code !== "invalid_request_error") {
+                                        alert(orbT("errors.session"))
+                                        setIsConnected(false)
+                                        handleStateChange("idle")
+                                        onBackgroundImageChange?.(null)
+                                }
                         })
                 },
-                [handleBackgroundImageToolCall, handleStateChange, onBackgroundImageChange, orbT, updateListeningState],
+                [handleStateChange, onBackgroundImageChange, orbT, updateListeningState],
         )
 
 	const connect = useCallback(async () => {
@@ -192,7 +164,38 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 		setIsConnecting(true)
 
 		try {
-			// Exchange regular API key for ephemeral client key
+                        // GA Realtime HTTP API does not accept `tools[].strict`, but the SDK types require it.
+                        // So we keep `strict` for local tool routing, and strip it when sending session config to OpenAI.
+                        const openAiToolDefinitions = (() => {
+                                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                                const { strict: _strict, ...rest } =
+                                        BACKGROUND_IMAGE_TOOL_DEFINITION as unknown as Record<string, unknown>
+                                return [rest]
+                        })()
+
+                        const backgroundImageTool = tool<any>({
+                                name: BACKGROUND_IMAGE_TOOL_DEFINITION.name,
+                                description: BACKGROUND_IMAGE_TOOL_DEFINITION.description,
+                                parameters: BACKGROUND_IMAGE_TOOL_DEFINITION.parameters as any,
+                                // Keep this permissive: the SDK will parse JSON, but we allow additional fields.
+                                strict: false,
+                                execute: async (args) => {
+                                        const result = await generateBackgroundImage({
+                                                translate: orbT,
+                                                args: (args ?? {}) as Record<string, unknown>,
+                                                onBackgroundImageChange,
+                                        })
+
+                                        if (result.status === "success") {
+                                                const { imageUrl: _imageUrl, ...rest } = result
+                                                return rest
+                                        }
+
+                                        return result
+                                },
+                        })
+
+			// Exchange regular API key for ephemeral client key (GA format)
 			console.log("[Primer] Exchanging API key for ephemeral client key...")
 			const clientSecretResponse = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
 				method: "POST",
@@ -204,6 +207,12 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 					session: {
 						type: "realtime",
 						model: "gpt-realtime",
+						instructions,
+						tools: openAiToolDefinitions,
+						tool_choice: "auto",
+						audio: {
+							output: { voice: "alloy" },
+						},
 					},
 				}),
 			})
@@ -226,6 +235,7 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
                                 name: "Primer",
                                 instructions,
                                 voice: "alloy",
+                                tools: [backgroundImageTool],
                         })
 			agentRef.current = agent
 			console.log("[Primer] Created RealtimeAgent:", agent.name)
@@ -234,8 +244,6 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
                                 config: {
                                         model: "gpt-realtime",
                                         instructions,
-                                        toolChoice: "auto" as const,
-                                        tools: [BACKGROUND_IMAGE_TOOL_DEFINITION],
 					audio: {
 						input: {
 							turnDetection: {
@@ -256,6 +264,8 @@ export function useRealtimeAgent(options: UseRealtimeAgentOptions = {}): UseReal
 			}
 
 			console.log("[Primer] Session config:", sessionConfig)
+			console.log("[Primer] Tools being registered (OpenAI session):", openAiToolDefinitions)
+			console.log("[Primer] Tools registered locally (agent):", agent.tools?.map((t) => t.name))
 
 			const session = new RealtimeSession(agent, sessionConfig)
 			sessionRef.current = session
