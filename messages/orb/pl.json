@@ -26,5 +26,8 @@
   "prompt": {
     "languageInstruction": "Proszę odpowiadać po polsku.",
     "welcome": "Przywitaj się krótko i serdecznie, aby dziecko wiedziało, że jesteś gotowa do rozmowy. Powiedz coś w stylu: \"Cześć! Jestem Primer, Twoja towarzyszka nauki. O czym chcesz dziś porozmawiać?\""
+  },
+  "background": {
+    "defaultPrompt": "Miękki, bajkowy pejzaż z delikatnym światłem, subtelnymi kształtami i kojącymi kolorami sprzyjającymi skupieniu."
   }
 }
